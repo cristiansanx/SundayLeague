@@ -85,6 +85,8 @@
       border-color:var(--card-border) !important;
     }
     input::placeholder{ color:var(--text-muted); opacity:1; }
+    /* Estos selects mantienen fondo claro a propósito (van sobre la tarjeta de color del equipo) */
+    #selectColorA, #selectColorB{ background-color:#ffffff !important; color:#0f172a !important; }
     thead.bg-slate-50{ background-color:rgba(255,255,255,.03) !important; }
     tbody tr.bg-white,tbody tr.bg-slate-50{ background-color:transparent !important; }
     tbody tr:nth-child(odd){ background-color:rgba(255,255,255,.02); }
@@ -326,7 +328,7 @@
       <div id="posterWrapper" class="poster-bg rounded-2xl p-6 md:p-10 poster-card relative">
         <!-- Logo -->
         <div class="absolute right-4 top-4">
-          <img id="clubLogoPoster" class="h-28 w-28 md:h-32 md:w-32 object-contain rounded-md ring-1 ring-white/30 bg-white/90" alt="Logo">
+          <img id="clubLogoPoster" class="h-12 w-12 sm:h-16 sm:w-16 md:h-28 md:w-28 lg:h-32 lg:w-32 object-contain rounded-md ring-1 ring-white/30 bg-white/90" alt="Logo">
         </div>
         <!-- Acciones del admin -->
         <div data-solo-admin class="absolute left-4 top-4 flex flex-col items-start gap-2">
