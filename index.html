@@ -748,6 +748,38 @@
       }
     }
 
+    /* ---------- Actualización en vivo (Supabase Realtime) ---------- */
+    function refrescarVistaActual(){
+      // Admin (repintar aunque esté oculto no tiene costo ni efectos secundarios)
+      pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma();
+      cargarLogoUI(); pintarEquipos(); actualizarEstadoEquiposAdmin(); pintarPartido();
+      renderDashboard(); renderHistorial();
+      // Socio
+      socioMostrarInfoPartido();
+      const vistaAsistencia=document.getElementById('socioAttendanceView');
+      if(vistaAsistencia && !vistaAsistencia.classList.contains('hidden')) socioRenderAsistencia();
+    }
+
+    let refrescoPendiente=null;
+    function onCambioRealtime(){
+      clearTimeout(refrescoPendiente);
+      refrescoPendiente=setTimeout(async ()=>{
+        try{
+          await cargarTodoDesdeSupabase();
+          refrescarVistaActual();
+        }catch(err){ console.error('Error refrescando datos en vivo:', err); }
+      }, 300);
+    }
+
+    function iniciarRealtime(){
+      sb.channel('cambios-liga')
+        .on('postgres_changes',{event:'*',schema:'public',table:'socios'},onCambioRealtime)
+        .on('postgres_changes',{event:'*',schema:'public',table:'canchas'},onCambioRealtime)
+        .on('postgres_changes',{event:'*',schema:'public',table:'historial'},onCambioRealtime)
+        .on('postgres_changes',{event:'*',schema:'public',table:'estado_partido'},onCambioRealtime)
+        .subscribe();
+    }
+
     const COLORS={
       negro:{name:'EQUIPO NEGRO', head:'bg-neutral-900', grad:'from-neutral-900 to-neutral-700', hex:'#111827', text:'#ffffff'},
       azul:{name:'EQUIPO AZUL',  head:'bg-blue-700',    grad:'from-blue-700 to-blue-500',   hex:'#2563eb', text:'#ffffff'},
@@ -1914,6 +1946,7 @@
       }
       if(sessionStorage.getItem(ADMIN_AUTH_KEY)==='1'){ mostrarAdmin(); } else { mostrarSocio(); }
       document.getElementById('pantallaCarga').classList.add('hidden');
+      iniciarRealtime();
     })();
   </script>
 </body>
