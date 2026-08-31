@@ -576,15 +576,17 @@
 
           <!-- Identificación -->
           <div id="socioLoginView">
-            <label for="socioTelefono" class="block text-base font-bold mb-2">Identifícate para votar</label>
-            <input id="socioTelefono" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12"
-                   placeholder="9 1234 5678"
-                   class="w-full rounded-xl border border-slate-300 p-3 text-lg outline-none focus:ring-2 focus:ring-indigo-500">
+            <form id="formSocioLogin" autocomplete="off">
+              <label for="socioTelefono" class="block text-base font-bold mb-2">Identifícate para votar</label>
+              <input id="socioTelefono" type="tel" inputmode="numeric" autocomplete="off" maxlength="12"
+                     placeholder="9 1234 5678"
+                     class="w-full rounded-xl border border-slate-300 p-3 text-lg outline-none focus:ring-2 focus:ring-indigo-500">
 
-            <button id="socioBtnIdentificar" type="button"
-                    class="w-full mt-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3">
-              Continuar
-            </button>
+              <button id="socioBtnIdentificar" type="submit"
+                      class="w-full mt-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3">
+                Continuar
+              </button>
+            </form>
 
             <p id="socioError" class="hidden text-sm text-red-600 text-center mt-3"></p>
 
@@ -684,13 +686,15 @@
     <div class="rounded-2xl p-5 w-full max-w-sm" style="background:var(--card-bg-solid); border:1px solid var(--card-border); color:var(--text-primary);">
       <h3 class="text-lg font-extrabold mb-1">Acceso administrador</h3>
       <p class="text-sm mb-4" style="color:var(--text-secondary)">Ingresa la clave para entrar al panel de administración.</p>
-      <input id="inputClaveAdmin" type="password" placeholder="Clave" autocomplete="off"
-             class="w-full rounded-lg border p-3 text-lg">
-      <p id="errorClaveAdmin" class="hidden text-sm text-red-500 mt-2">Clave incorrecta.</p>
-      <div class="flex gap-3 mt-5">
-        <button id="btnModalClaveCancelar" type="button" class="flex-1 px-4 py-2 rounded-lg bg-slate-200 text-slate-800 text-sm font-semibold">Cancelar</button>
-        <button id="btnModalClaveAceptar" type="button" class="flex-1 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold">Entrar</button>
-      </div>
+      <form id="formClaveAdmin" autocomplete="off">
+        <input id="inputClaveAdmin" type="password" placeholder="Clave" autocomplete="one-time-code"
+               class="w-full rounded-lg border p-3 text-lg">
+        <p id="errorClaveAdmin" class="hidden text-sm text-red-500 mt-2">Clave incorrecta.</p>
+        <div class="flex gap-3 mt-5">
+          <button id="btnModalClaveCancelar" type="button" class="flex-1 px-4 py-2 rounded-lg bg-slate-200 text-slate-800 text-sm font-semibold">Cancelar</button>
+          <button id="btnModalClaveAceptar" type="submit" class="flex-1 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold">Entrar</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2043,7 +2047,8 @@
       }
     }
 
-    document.getElementById('socioBtnIdentificar').addEventListener('click',()=>{
+    document.getElementById('formSocioLogin').addEventListener('submit',e=>{
+      e.preventDefault();
       const errEl=document.getElementById('socioError');
       errEl.classList.add('hidden');
       const tel=normalizarTelefonoAdmin(document.getElementById('socioTelefono').value);
@@ -2061,10 +2066,6 @@
         document.getElementById('socioTextoVoto').textContent='Registra tu respuesta.';
         socioMostrarVista('socioVoteView');
       }
-    });
-
-    document.getElementById('socioTelefono').addEventListener('keydown',e=>{
-      if(e.key==='Enter') document.getElementById('socioBtnIdentificar').click();
     });
 
     document.querySelectorAll('.socio-voto-btn').forEach(btn=>{
@@ -2125,9 +2126,9 @@
     document.getElementById('btnModalClaveCancelar').addEventListener('click',()=>{
       document.getElementById('modalClaveAdmin').classList.add('hidden');
     });
-    document.getElementById('btnModalClaveAceptar').addEventListener('click',intentarEntrarAdmin);
-    document.getElementById('inputClaveAdmin').addEventListener('keydown',e=>{
-      if(e.key==='Enter') intentarEntrarAdmin();
+    document.getElementById('formClaveAdmin').addEventListener('submit',e=>{
+      e.preventDefault();
+      intentarEntrarAdmin();
     });
     document.getElementById('btnCerrarSesionAdmin').addEventListener('click',()=>{
       sessionStorage.removeItem(ADMIN_AUTH_KEY);
