@@ -497,9 +497,23 @@
           <div id="chartMVP"></div>
         </div>
         <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-2">Inasistencia</h3>
-          <p class="text-xs mb-2" style="color:var(--text-muted)">Jugadores que votaron “NO ASISTO”.</p>
+          <h3 class="text-lg font-bold mb-2">Inasistencia sin aviso</h3>
+          <p class="text-xs mb-2" style="color:var(--text-muted)">Confirmaron asistencia (votaron SÍ) pero no llegaron al partido.</p>
           <div id="chartInasistencia"></div>
+        </div>
+      </div>
+
+      <!-- Falta justificada + No votan -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="card bg-white p-4 shadow">
+          <h3 class="text-lg font-bold mb-2">Falta justificada</h3>
+          <p class="text-xs mb-2" style="color:var(--text-muted)">Avisaron con anticipación votando “NO ASISTO”.</p>
+          <div id="chartFaltaJustificada"></div>
+        </div>
+        <div class="card bg-white p-4 shadow">
+          <h3 class="text-lg font-bold mb-2">Jugadores que no votan</h3>
+          <p class="text-xs mb-2" style="color:var(--text-muted)">No respondieron la encuesta (ni SÍ ni NO) antes del partido.</p>
+          <div id="chartNoVotan"></div>
         </div>
       </div>
 
@@ -751,7 +765,7 @@
         equipoA:r.equipo_a, equipoB:r.equipo_b, resultado:r.resultado,
         asistenciaJugadores:r.asistencia_jugadores, multas:r.multas,
         multasPagadas:r.multas_pagadas||{}, totalMultas:r.total_multas,
-        inasistentes:r.inasistentes, mvp:r.mvp
+        inasistentes:r.inasistentes, noVotaron:r.no_votaron||[], faltaJustificada:r.falta_justificada||[], mvp:r.mvp
       };
     }
     function historialAFila(h){
@@ -761,7 +775,7 @@
         equipo_a:h.equipoA, equipo_b:h.equipoB, resultado:h.resultado,
         asistencia_jugadores:h.asistenciaJugadores, multas:h.multas,
         multas_pagadas:h.multasPagadas||{}, total_multas:h.totalMultas,
-        inasistentes:h.inasistentes, mvp:h.mvp||null
+        inasistentes:h.inasistentes, no_votaron:h.noVotaron||[], falta_justificada:h.faltaJustificada||[], mvp:h.mvp||null
       };
     }
 
@@ -1464,6 +1478,9 @@
         id=>asistenciaJugadores[id]==='NO_ASISTE'
       );
 
+      const noVotaron=socios.filter(s=>s.voto!=='SI'&&s.voto!=='NO').map(s=>s.id);
+      const faltaJustificada=socios.filter(s=>s.voto==='NO').map(s=>s.id);
+
       const totalMultas=Object.values(multas).reduce(
         (sum,v)=>sum+Number(v||0),0
       );
@@ -1495,6 +1512,8 @@
         multas,
         totalMultas,
         inasistentes,
+        noVotaron,
+        faltaJustificada,
         mvp:mvpPartido
       };
 
@@ -1892,7 +1911,7 @@
 
     function renderDashboard(){
       // El Dashboard se actualiza con historial; historial se escribe solo al finalizar.
-      const wins={},golesPorColor={},asis={},inasistencia={},mvpCount={},partidosPorColor={};
+      const wins={},golesPorColor={},asis={},inasistencia={},mvpCount={},partidosPorColor={},noVotanCount={},faltaJustCount={};
 
       historial.forEach(h=>{
         const r=h.resultado||{};
@@ -1908,15 +1927,13 @@
         golesPorColor[ca]=(golesPorColor[ca]||0)+Number(r.golesA||0);
         golesPorColor[cb]=(golesPorColor[cb]||0)+Number(r.golesB||0);
 
-        (h.equipoA?.jugadores||[]).forEach(id=>asis[nombreById(id)]=(asis[nombreById(id)]||0)+1);
-        (h.equipoB?.jugadores||[]).forEach(id=>asis[nombreById(id)]=(asis[nombreById(id)]||0)+1);
-
-        Object.entries(h.votosNoAsistencia||{}).forEach(([id,v])=>{
-          if(v)inasistencia[nombreById(id)]=(inasistencia[nombreById(id)]||0)+1;
+        [...(h.equipoA?.jugadores||[]),...(h.equipoB?.jugadores||[])].forEach(id=>{
+          if((h.asistenciaJugadores||{})[id]!=='NO_ASISTE') asis[nombreById(id)]=(asis[nombreById(id)]||0)+1;
         });
-        if(!Object.keys(h.votosNoAsistencia||{}).length){
-          (h.inasistentes||[]).forEach(id=>inasistencia[nombreById(id)]=(inasistencia[nombreById(id)]||0)+1);
-        }
+
+        (h.inasistentes||[]).forEach(id=>inasistencia[nombreById(id)]=(inasistencia[nombreById(id)]||0)+1);
+        (h.faltaJustificada||[]).forEach(id=>faltaJustCount[nombreById(id)]=(faltaJustCount[nombreById(id)]||0)+1);
+        (h.noVotaron||[]).forEach(id=>noVotanCount[nombreById(id)]=(noVotanCount[nombreById(id)]||0)+1);
 
         if(h.mvp)mvpCount[nombreById(h.mvp)]=(mvpCount[nombreById(h.mvp)]||0)+1;
       });
@@ -1927,6 +1944,8 @@
       const asisPairs=Object.entries(asis).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const inasPairs=Object.entries(inasistencia).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const mvpPairs=Object.entries(mvpCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+      const faltaJustPairs=Object.entries(faltaJustCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+      const noVotanPairs=Object.entries(noVotanCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
 
       // KPIs
       const partidosJugados=historial.length;
@@ -1950,6 +1969,8 @@
       makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["Sin datos",0]],{fill:'#ec4899',fill2:'#8b5cf6'});
       makeBarChart(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs.length?partidosPorColorPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#22ff88'});
       makeBarChart(document.getElementById('chartInasistencia'),inasPairs.length?inasPairs:[["Sin datos",0]],{fill:'#f59e0b',fill2:'#ef4444'});
+      makeBarChart(document.getElementById('chartFaltaJustificada'),faltaJustPairs.length?faltaJustPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#8b5cf6'});
+      makeBarChart(document.getElementById('chartNoVotan'),noVotanPairs.length?noVotanPairs:[["Sin datos",0]],{fill:'#6b7280',fill2:'#ef4444'});
       makeBarChart(document.getElementById('chartMVP'),mvpPairs.length?mvpPairs:[["Sin datos",0]],{fill:'#eab308',fill2:'#f59e0b'});
 
       pintarPartidosRecientes();
