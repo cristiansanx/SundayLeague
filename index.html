@@ -520,9 +520,9 @@
       <!-- Cobranza -->
       <div class="card p-5 shadow mb-6" style="background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(255,255,255,.02)); border:1px solid rgba(245,158,11,.3);">
         <div class="text-xs uppercase tracking-widest font-bold" style="color:#ffc24d">Cobranza</div>
-        <h3 class="text-2xl font-extrabold mt-1">TOTAL MULTAS PENDIENTES</h3>
-        <p class="text-sm mt-1" style="color:var(--text-secondary)">Solo considera partidos finalizados.</p>
-        <div id="totalMultasPendientes" class="text-4xl font-black mt-2" style="color:#ffc24d">$0</div>
+        <h3 class="text-lg font-bold mt-1">TOTAL MULTAS PENDIENTES</h3>
+        <p class="text-xs mt-1" style="color:var(--text-secondary)">Solo considera partidos finalizados.</p>
+        <div id="totalMultasPendientes" class="text-3xl font-black mt-2" style="color:#ffc24d">$0</div>
       </div>
 
       <div class="card bg-white p-4 shadow">
@@ -2016,8 +2016,8 @@
       // Agrupa por fecha pero conserva índice global para poder borrar
       const byDate={};
       historial.forEach((h,i)=>{ (byDate[h.fecha]=byDate[h.fecha]||[]).push({i,h}); });
-      Object.keys(byDate).sort().forEach(fecha=>{
-        const arr=byDate[fecha];
+      Object.keys(byDate).sort().reverse().forEach(fecha=>{
+        const arr=byDate[fecha].slice().reverse();
         const wrapper=document.createElement('div'); wrapper.className='card bg-white p-4 shadow';
         const header=document.createElement('div'); header.className='flex items-center justify-between mb-2';
         header.innerHTML=`<div class="text-lg font-bold">Fecha: ${fecha}</div>`;
