@@ -587,14 +587,21 @@
                 Continuar
               </button>
             </form>
-
-            <p id="socioError" class="hidden text-sm text-red-600 text-center mt-3"></p>
-
-            <button id="socioBtnAdminLogin" type="button"
-                    class="w-full mt-5 rounded-xl border py-2 text-xs font-semibold" style="color:var(--text-muted); border-color:var(--card-border);">
-              Administrador
-            </button>
           </div>
+
+          <!-- Sin partido programado -->
+          <div id="socioSinPartidoView" class="hidden text-center py-4">
+            <div class="text-4xl mb-2">🗓️</div>
+            <h2 class="text-lg font-bold mb-1">Aún no hay un partido programado</h2>
+            <p class="text-sm" style="color:var(--text-secondary)">Cuando el administrador programe el próximo partido, vas a poder votar aquí.</p>
+          </div>
+
+          <p id="socioError" class="hidden text-sm text-red-600 text-center mt-3"></p>
+
+          <button id="socioBtnAdminLogin" type="button"
+                  class="w-full mt-5 rounded-xl border py-2 text-xs font-semibold" style="color:var(--text-muted); border-color:var(--card-border);">
+            Administrador
+          </button>
 
           <!-- Votación -->
           <div id="socioVoteView" class="hidden">
@@ -782,13 +789,19 @@
     }
 
     /* ---------- Cargar todo desde Supabase al abrir la app ---------- */
+    let cargaSeq=0;
     async function cargarTodoDesdeSupabase(){
+      const miSeq=++cargaSeq;
       const [rSocios, rCanchas, rHistorial, rEstado] = await Promise.all([
         sb.from('socios').select('*'),
         sb.from('canchas').select('*'),
         sb.from('historial').select('*').order('created_at',{ascending:true}),
         sb.from('estado_partido').select('*').eq('id',1).single()
       ]);
+      // Si ya se lanzó una carga más nueva mientras esperábamos esta, descartamos
+      // esta respuesta atrasada para no pisar datos más recientes con datos viejos.
+      if(miSeq!==cargaSeq) return;
+
       socios = rSocios.data || [];
       canchas = rCanchas.data || [];
       historial = (rHistorial.data || []).map(filaAHistorial);
@@ -2017,6 +2030,16 @@
       document.getElementById('socioHorario').textContent = (cronograma.inicio && cronograma.fin) ? `${cronograma.inicio} – ${cronograma.fin}` : '—';
       document.getElementById('socioCancha').textContent = cancha?.nombre || '—';
       document.getElementById('socioDireccion').textContent = cancha?.direccion || '';
+
+      // Sin cronograma completo no hay partido programado: no se puede votar todavía.
+      if(!socioActual){
+        const hayPartido = Boolean(cronograma.fecha && cronograma.inicio && cronograma.fin && cronograma.canchaId);
+        document.getElementById('socioLoginView').classList.toggle('hidden', !hayPartido);
+        document.getElementById('socioSinPartidoView').classList.toggle('hidden', hayPartido);
+        document.getElementById('socioVoteView').classList.add('hidden');
+        document.getElementById('socioSuccessView').classList.add('hidden');
+        document.getElementById('socioAttendanceView').classList.add('hidden');
+      }
     }
 
     function socioMostrarVista(vista){
@@ -2104,8 +2127,8 @@
     function mostrarSocio(){
       document.getElementById('appAdmin').classList.add('hidden');
       document.getElementById('appSocio').classList.remove('hidden');
-      socioMostrarInfoPartido();
       socioMostrarVista('socioLoginView');
+      socioMostrarInfoPartido();
     }
     function intentarEntrarAdmin(){
       const clave=document.getElementById('inputClaveAdmin').value;
