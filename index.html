@@ -452,7 +452,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div class="card bg-white p-4 shadow lg:col-span-2">
           <h3 class="text-lg font-bold mb-1">Asistencia por partido</h3>
-          <p class="text-xs mb-3" style="color:var(--text-muted)">Porcentaje de jugadores que asisten, partido a partido.</p>
+          <p class="text-xs mb-3" style="color:var(--text-muted)">Porcentaje de jugadores que asisten, últimos 10 partidos.</p>
           <div id="chartAsistenciaTendencia"></div>
         </div>
         <div class="card bg-white p-4 shadow flex flex-col">
@@ -1676,9 +1676,11 @@
         const y=i*barH+4;
         const bg=document.createElementNS(svgNS,'rect'); bg.setAttribute('x',130); bg.setAttribute('y',y); bg.setAttribute('width',W-150); bg.setAttribute('height',barH-10); bg.setAttribute('rx',6); bg.setAttribute('fill','rgba(255,255,255,.05)');
         const w=Math.max(4,Math.round((W-150)*(p[1]/max)));
-        const bar=document.createElementNS(svgNS,'rect'); bar.setAttribute('x',130); bar.setAttribute('y',y); bar.setAttribute('width',w); bar.setAttribute('height',barH-10); bar.setAttribute('rx',6); bar.setAttribute('fill',`url(#${gradId})`);
-        const label=document.createElementNS(svgNS,'text'); label.setAttribute('x',6); label.setAttribute('y',y+barH-16); label.setAttribute('fill','#a6b0aa'); label.setAttribute('font-size','12'); label.textContent=p[0];
-        const val=document.createElementNS(svgNS,'text'); val.setAttribute('x',130+w+8); val.setAttribute('y',y+barH-16); val.setAttribute('fill','#f1f5f2'); val.setAttribute('font-size','12'); val.setAttribute('font-weight','700'); val.textContent=p[1];
+        const fillColor = opts.colorsPorItem ? (opts.colorsPorItem[i]||'#8b5cf6') : `url(#${gradId})`;
+        const bar=document.createElementNS(svgNS,'rect'); bar.setAttribute('x',130); bar.setAttribute('y',y); bar.setAttribute('width',w); bar.setAttribute('height',barH-10); bar.setAttribute('rx',6); bar.setAttribute('fill',fillColor);
+        if(opts.colorsPorItem){ bar.setAttribute('stroke','rgba(255,255,255,.25)'); bar.setAttribute('stroke-width','1'); }
+        const label=document.createElementNS(svgNS,'text'); label.setAttribute('x',6); label.setAttribute('y',y+barH-16); label.setAttribute('fill','#a6b0aa'); label.setAttribute('font-size','14'); label.textContent=p[0];
+        const val=document.createElementNS(svgNS,'text'); val.setAttribute('x',130+w+8); val.setAttribute('y',y+barH-16); val.setAttribute('fill','#f1f5f2'); val.setAttribute('font-size','14'); val.setAttribute('font-weight','700'); val.textContent=p[1];
         svg.append(bg,bar,label,val);
       });
       container.innerHTML=''; container.appendChild(svg);
@@ -1705,7 +1707,7 @@
     }
 
     function makeAreaChart(container, values, opts={}){
-      const W=720, H=200, pad=28;
+      const W=720, H=220, pad=28, padBottom=42;
       const svgNS='http://www.w3.org/2000/svg';
       const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.classList.add('w-full');
       const color=opts.color||'#8b5cf6';
@@ -1724,16 +1726,17 @@
 
       const max=Math.max(100,...values.map(v=>v.value));
       const n=values.length;
+      const plotBottom=H-padBottom;
       const xStep=n>1?(W-pad*2)/(n-1):0;
       const pts=values.map((v,i)=>{
         const x=pad+i*xStep;
-        const y=H-pad-(v.value/max)*(H-pad*2);
+        const y=plotBottom-(v.value/max)*(plotBottom-pad);
         return [x,y];
       });
 
       let linePath=`M ${pts[0][0]} ${pts[0][1]}`;
       pts.slice(1).forEach(p=>{ linePath+=` L ${p[0]} ${p[1]}`; });
-      const areaPath=linePath+` L ${pts[n-1][0]} ${H-pad} L ${pts[0][0]} ${H-pad} Z`;
+      const areaPath=linePath+` L ${pts[n-1][0]} ${plotBottom} L ${pts[0][0]} ${plotBottom} Z`;
 
       const area=document.createElementNS(svgNS,'path'); area.setAttribute('d',areaPath); area.setAttribute('fill',`url(#${gradId})`);
       const line=document.createElementNS(svgNS,'path'); line.setAttribute('d',linePath); line.setAttribute('fill','none'); line.setAttribute('stroke',color); line.setAttribute('stroke-width','3'); line.setAttribute('stroke-linecap','round'); line.setAttribute('stroke-linejoin','round');
@@ -1744,11 +1747,16 @@
         dot.setAttribute('r', i===n-1?5:3);
         dot.setAttribute('fill', i===n-1?color:'rgba(255,255,255,.35)');
         svg.appendChild(dot);
+
+        if(values[i].fechaLabel){
+          const dl=document.createElementNS(svgNS,'text'); dl.setAttribute('x',p[0]); dl.setAttribute('y',plotBottom+18); dl.setAttribute('text-anchor','middle'); dl.setAttribute('fill','#a6b0aa'); dl.setAttribute('font-size','14'); dl.textContent=values[i].fechaLabel;
+          svg.appendChild(dl);
+        }
       });
 
       if(n){
         const last=values[n-1];
-        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',pts[n-1][0]); t.setAttribute('y',Math.max(14,pts[n-1][1]-12)); t.setAttribute('text-anchor','end'); t.setAttribute('fill','#f1f5f2'); t.setAttribute('font-size','13'); t.setAttribute('font-weight','700'); t.textContent=`${last.value}%`;
+        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',pts[n-1][0]); t.setAttribute('y',Math.max(14,pts[n-1][1]-12)); t.setAttribute('text-anchor','end'); t.setAttribute('fill','#f1f5f2'); t.setAttribute('font-size','14'); t.setAttribute('font-weight','700'); t.textContent=`${last.value}%`;
         svg.appendChild(t);
       }
 
@@ -1780,14 +1788,17 @@
           svg.appendChild(circle);
           offset+=dash;
         });
+        const outerRing=document.createElementNS(svgNS,'circle'); outerRing.setAttribute('cx',cx); outerRing.setAttribute('cy',cy); outerRing.setAttribute('r',r+strokeW/2); outerRing.setAttribute('fill','none'); outerRing.setAttribute('stroke','rgba(255,255,255,.18)'); outerRing.setAttribute('stroke-width','1');
+        const innerRing=document.createElementNS(svgNS,'circle'); innerRing.setAttribute('cx',cx); innerRing.setAttribute('cy',cy); innerRing.setAttribute('r',r-strokeW/2); innerRing.setAttribute('fill','none'); innerRing.setAttribute('stroke','rgba(255,255,255,.18)'); innerRing.setAttribute('stroke-width','1');
+        svg.append(outerRing,innerRing);
       }
       const t1=document.createElementNS(svgNS,'text'); t1.setAttribute('x',cx); t1.setAttribute('y',cy-2); t1.setAttribute('text-anchor','middle'); t1.setAttribute('font-size','20'); t1.setAttribute('font-weight','800'); t1.setAttribute('fill','#f1f5f2'); t1.textContent=dataPairs[0]?dataPairs[0][0]:'—';
-      const t2=document.createElementNS(svgNS,'text'); t2.setAttribute('x',cx); t2.setAttribute('y',cy+16); t2.setAttribute('text-anchor','middle'); t2.setAttribute('font-size','11'); t2.setAttribute('fill','#6f7a73'); t2.textContent=`${total} partido${total===1?'':'s'}`;
+      const t2=document.createElementNS(svgNS,'text'); t2.setAttribute('x',cx); t2.setAttribute('y',cy+18); t2.setAttribute('text-anchor','middle'); t2.setAttribute('font-size','14'); t2.setAttribute('fill','#6f7a73'); t2.textContent=`${total} partido${total===1?'':'s'}`;
       svg.append(t1,t2);
 
       const wrapper=document.createElement('div'); wrapper.className='flex flex-col items-center gap-3';
       wrapper.appendChild(svg);
-      const legend=document.createElement('div'); legend.className='flex flex-wrap gap-3 justify-center text-xs';
+      const legend=document.createElement('div'); legend.className='flex flex-wrap gap-3 justify-center text-sm';
       dataPairs.forEach((p,i)=>{
         const item=document.createElement('div'); item.className='flex items-center gap-1.5';
         item.innerHTML=`<span style="width:9px;height:9px;border-radius:50%;background:${colors[i%colors.length]};display:inline-block;"></span><span>${p[0]} (${p[1]})</span>`;
@@ -1822,6 +1833,11 @@
       if(!fecha)return '—';
       const d=new Date(fecha+'T00:00:00');
       return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+    function formatoFechaCorta(fecha){
+      if(!fecha)return '';
+      const d=new Date(fecha+'T00:00:00');
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
     }
 
     function construirMultas(){
@@ -1938,9 +1954,20 @@
         if(h.mvp)mvpCount[nombreById(h.mvp)]=(mvpCount[nombreById(h.mvp)]||0)+1;
       });
 
-      const winPairs=Object.entries(wins).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
-      const partidosPorColorPairs=Object.entries(partidosPorColor).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
-      const golPairs=Object.entries(golesPorColor).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c.toUpperCase(),v]);
+      const colorHex=c=>COLORS[c]?.hex||'#6b7280';
+
+      const winEntries=Object.entries(wins).sort((a,b)=>b[1]-a[1]);
+      const winPairs=winEntries.map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
+      const winColors=winEntries.map(([c])=>colorHex(c));
+
+      const partidosPorColorEntries=Object.entries(partidosPorColor).sort((a,b)=>b[1]-a[1]);
+      const partidosPorColorPairs=partidosPorColorEntries.map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
+      const partidosPorColorColors=partidosPorColorEntries.map(([c])=>colorHex(c));
+
+      const golEntries=Object.entries(golesPorColor).sort((a,b)=>b[1]-a[1]);
+      const golPairs=golEntries.map(([c,v])=>[c.toUpperCase(),v]);
+      const golColors=golEntries.map(([c])=>colorHex(c));
+
       const asisPairs=Object.entries(asis).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const inasPairs=Object.entries(inasistencia).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const mvpPairs=Object.entries(mvpCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
@@ -1952,8 +1979,9 @@
       const asistenciaSerie=historial.map(h=>{
         const total=(h.equipoA?.jugadores?.length||0)+(h.equipoB?.jugadores?.length||0);
         const noAsisten=Object.values(h.asistenciaJugadores||{}).filter(v=>v==='NO_ASISTE').length;
-        return {label:h.fecha, value: total?Math.round(((total-noAsisten)/total)*100):0};
+        return {label:h.fecha, fechaLabel:formatoFechaCorta(h.fecha), value: total?Math.round(((total-noAsisten)/total)*100):0};
       });
+      const asistenciaSerieChart=asistenciaSerie.slice(-10);
       const asistenciaPromedio=asistenciaSerie.length?Math.round(asistenciaSerie.reduce((s,x)=>s+x.value,0)/asistenciaSerie.length):0;
       const golesPromedio=partidosJugados?(historial.reduce((s,h)=>s+Number(h.resultado?.golesA||0)+Number(h.resultado?.golesB||0),0)/partidosJugados).toFixed(1):'0.0';
       const multasCobradas=construirMultas().filter(m=>m.pagada).reduce((s,m)=>s+m.monto,0);
@@ -1963,11 +1991,11 @@
       const elGo=document.getElementById('kpiGoles'); if(elGo)elGo.textContent=golesPromedio;
       const elMu=document.getElementById('kpiMultas'); if(elMu)elMu.textContent=`$${multasCobradas.toLocaleString('es-CL')}`;
 
-      makeAreaChart(document.getElementById('chartAsistenciaTendencia'), asistenciaSerie, {color:'#8b5cf6'});
-      makeDonutChart(document.getElementById('chartColoresDonut'), winPairs, {colors:['#8b5cf6','#3b82f6','#ec4899','#f59e0b']});
+      makeAreaChart(document.getElementById('chartAsistenciaTendencia'), asistenciaSerieChart, {color:'#8b5cf6'});
+      makeDonutChart(document.getElementById('chartColoresDonut'), winPairs, {colors: winColors.length?winColors:['#6b7280']});
       makeProgressList(document.getElementById('chartAsistenciaMax'), asisPairs, {color:'#3b82f6'});
-      makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["Sin datos",0]],{fill:'#ec4899',fill2:'#8b5cf6'});
-      makeBarChart(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs.length?partidosPorColorPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#22ff88'});
+      makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["Sin datos",0]],{colorsPorItem: golColors.length?golColors:['#6b7280']});
+      makeBarChart(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs.length?partidosPorColorPairs:[["Sin datos",0]],{colorsPorItem: partidosPorColorColors.length?partidosPorColorColors:['#6b7280']});
       makeBarChart(document.getElementById('chartInasistencia'),inasPairs.length?inasPairs:[["Sin datos",0]],{fill:'#f59e0b',fill2:'#ef4444'});
       makeBarChart(document.getElementById('chartFaltaJustificada'),faltaJustPairs.length?faltaJustPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#8b5cf6'});
       makeBarChart(document.getElementById('chartNoVotan'),noVotanPairs.length?noVotanPairs:[["Sin datos",0]],{fill:'#6b7280',fill2:'#ef4444'});
