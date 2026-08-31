@@ -1661,38 +1661,14 @@
     btnQuitarLogo.onclick=()=>{clubLogo=''; writeLS('club_logo',clubLogo); cargarLogoUI();};
 
     /* ---------- Dashboard (SVG barras) ---------- */
-    function makeBarChart(container, dataPairs, opts={}){
-      const max=Math.max(1,...dataPairs.map(p=>p[1])); const barH=28;
-      const svgNS='http://www.w3.org/2000/svg';
-      const W=720, H=barH*dataPairs.length+10;
-      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.classList.add('w-full');
-      const gradId='barGrad'+Math.random().toString(36).slice(2);
-      const defs=document.createElementNS(svgNS,'defs');
-      const grad=document.createElementNS(svgNS,'linearGradient'); grad.setAttribute('id',gradId); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','1'); grad.setAttribute('y2','0');
-      const c1=document.createElementNS(svgNS,'stop'); c1.setAttribute('offset','0%'); c1.setAttribute('stop-color', opts.fill||'#8b5cf6');
-      const c2=document.createElementNS(svgNS,'stop'); c2.setAttribute('offset','100%'); c2.setAttribute('stop-color', opts.fill2||opts.fill||'#3b82f6');
-      grad.append(c1,c2); defs.appendChild(grad); svg.appendChild(defs);
-      dataPairs.forEach((p,i)=>{
-        const y=i*barH+4;
-        const bg=document.createElementNS(svgNS,'rect'); bg.setAttribute('x',130); bg.setAttribute('y',y); bg.setAttribute('width',W-150); bg.setAttribute('height',barH-10); bg.setAttribute('rx',6); bg.setAttribute('fill','rgba(255,255,255,.05)');
-        const w=Math.max(4,Math.round((W-150)*(p[1]/max)));
-        const fillColor = opts.colorsPorItem ? (opts.colorsPorItem[i]||'#8b5cf6') : `url(#${gradId})`;
-        const bar=document.createElementNS(svgNS,'rect'); bar.setAttribute('x',130); bar.setAttribute('y',y); bar.setAttribute('width',w); bar.setAttribute('height',barH-10); bar.setAttribute('rx',6); bar.setAttribute('fill',fillColor);
-        if(opts.colorsPorItem){ bar.setAttribute('stroke','rgba(255,255,255,.25)'); bar.setAttribute('stroke-width','1'); }
-        const label=document.createElementNS(svgNS,'text'); label.setAttribute('x',6); label.setAttribute('y',y+barH-16); label.setAttribute('fill','#a6b0aa'); label.setAttribute('font-size','14'); label.textContent=p[0];
-        const val=document.createElementNS(svgNS,'text'); val.setAttribute('x',130+w+8); val.setAttribute('y',y+barH-16); val.setAttribute('fill','#f1f5f2'); val.setAttribute('font-size','14'); val.setAttribute('font-weight','700'); val.textContent=p[1];
-        svg.append(bg,bar,label,val);
-      });
-      container.innerHTML=''; container.appendChild(svg);
-    }
-
     function makeProgressList(container, dataPairs, opts={}){
       container.innerHTML='';
       if(!dataPairs.length){ container.innerHTML='<div class="text-sm" style="color:var(--text-muted)">Sin datos aún.</div>'; return; }
       const max=Math.max(1,...dataPairs.map(p=>p[1]));
       const color=opts.color||'#8b5cf6';
-      dataPairs.forEach(([label,value])=>{
+      dataPairs.forEach(([label,value],i)=>{
         const pct=Math.round((value/max)*100);
+        const barColor = opts.colorsPorItem ? (opts.colorsPorItem[i]||color) : color;
         const row=document.createElement('div'); row.className='mb-3';
         row.innerHTML=`
           <div class="flex items-center justify-between text-sm mb-1">
@@ -1700,21 +1676,23 @@
             <span style="color:var(--text-muted)">${value}</span>
           </div>
           <div class="rounded-full overflow-hidden" style="background:rgba(255,255,255,.06);height:8px;">
-            <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${color},${color}aa);border-radius:9999px;"></div>
+            <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${barColor},${barColor}aa);border-radius:9999px;"></div>
           </div>`;
         container.appendChild(row);
       });
     }
 
     function makeAreaChart(container, values, opts={}){
-      const W=720, H=220, pad=28, padBottom=42;
+      const W=720, H=220, pad=28, padBottom=42, padTop=30;
       const svgNS='http://www.w3.org/2000/svg';
       const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.classList.add('w-full');
       const color=opts.color||'#8b5cf6';
 
+      const wrapper=document.createElement('div'); wrapper.style.position='relative';
+
       if(!values.length){
-        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',W/2); t.setAttribute('y',H/2); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#6f7a73'); t.setAttribute('font-size','14'); t.textContent='Sin datos aún';
-        svg.appendChild(t); container.innerHTML=''; container.appendChild(svg); return;
+        wrapper.innerHTML='<div class="text-sm" style="color:var(--text-muted)">Sin datos aún.</div>';
+        container.innerHTML=''; container.appendChild(wrapper); return;
       }
 
       const gradId='areaGrad'+Math.random().toString(36).slice(2);
@@ -1730,7 +1708,7 @@
       const xStep=n>1?(W-pad*2)/(n-1):0;
       const pts=values.map((v,i)=>{
         const x=pad+i*xStep;
-        const y=plotBottom-(v.value/max)*(plotBottom-pad);
+        const y=padTop+(plotBottom-padTop)-(v.value/max)*(plotBottom-padTop);
         return [x,y];
       });
 
@@ -1747,20 +1725,30 @@
         dot.setAttribute('r', i===n-1?5:3);
         dot.setAttribute('fill', i===n-1?color:'rgba(255,255,255,.35)');
         svg.appendChild(dot);
+      });
+
+      wrapper.appendChild(svg);
+
+      // Etiquetas (HTML, no SVG) para que el tamaño de letra sea siempre el mismo sin importar el ancho de la tarjeta.
+      pts.forEach((p,i)=>{
+        const leftPct=(p[0]/W)*100;
+
+        const valLbl=document.createElement('div');
+        valLbl.textContent=`${values[i].value}%`;
+        valLbl.className='text-sm font-bold';
+        valLbl.style.cssText=`position:absolute; left:${leftPct}%; top:${(p[1]/H)*100}%; transform:translate(-50%,-22px); color:#f1f5f2; white-space:nowrap;`;
+        wrapper.appendChild(valLbl);
 
         if(values[i].fechaLabel){
-          const dl=document.createElementNS(svgNS,'text'); dl.setAttribute('x',p[0]); dl.setAttribute('y',plotBottom+18); dl.setAttribute('text-anchor','middle'); dl.setAttribute('fill','#a6b0aa'); dl.setAttribute('font-size','14'); dl.textContent=values[i].fechaLabel;
-          svg.appendChild(dl);
+          const dl=document.createElement('div');
+          dl.textContent=values[i].fechaLabel;
+          dl.className='text-sm';
+          dl.style.cssText=`position:absolute; left:${leftPct}%; top:${(plotBottom/H)*100}%; transform:translate(-50%,10px); color:#a6b0aa; white-space:nowrap;`;
+          wrapper.appendChild(dl);
         }
       });
 
-      if(n){
-        const last=values[n-1];
-        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',pts[n-1][0]); t.setAttribute('y',Math.max(14,pts[n-1][1]-12)); t.setAttribute('text-anchor','end'); t.setAttribute('fill','#f1f5f2'); t.setAttribute('font-size','14'); t.setAttribute('font-weight','700'); t.textContent=`${last.value}%`;
-        svg.appendChild(t);
-      }
-
-      container.innerHTML=''; container.appendChild(svg);
+      container.innerHTML=''; container.appendChild(wrapper);
     }
 
     function makeDonutChart(container, dataPairs, opts={}){
@@ -1994,12 +1982,12 @@
       makeAreaChart(document.getElementById('chartAsistenciaTendencia'), asistenciaSerieChart, {color:'#8b5cf6'});
       makeDonutChart(document.getElementById('chartColoresDonut'), winPairs, {colors: winColors.length?winColors:['#6b7280']});
       makeProgressList(document.getElementById('chartAsistenciaMax'), asisPairs, {color:'#3b82f6'});
-      makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["Sin datos",0]],{colorsPorItem: golColors.length?golColors:['#6b7280']});
-      makeBarChart(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs.length?partidosPorColorPairs:[["Sin datos",0]],{colorsPorItem: partidosPorColorColors.length?partidosPorColorColors:['#6b7280']});
-      makeBarChart(document.getElementById('chartInasistencia'),inasPairs.length?inasPairs:[["Sin datos",0]],{fill:'#f59e0b',fill2:'#ef4444'});
-      makeBarChart(document.getElementById('chartFaltaJustificada'),faltaJustPairs.length?faltaJustPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#8b5cf6'});
-      makeBarChart(document.getElementById('chartNoVotan'),noVotanPairs.length?noVotanPairs:[["Sin datos",0]],{fill:'#6b7280',fill2:'#ef4444'});
-      makeBarChart(document.getElementById('chartMVP'),mvpPairs.length?mvpPairs:[["Sin datos",0]],{fill:'#eab308',fill2:'#f59e0b'});
+      makeProgressList(document.getElementById('chartGolesColor'),golPairs,{colorsPorItem:golColors});
+      makeProgressList(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs,{colorsPorItem:partidosPorColorColors});
+      makeProgressList(document.getElementById('chartInasistencia'),inasPairs,{color:'#f59e0b'});
+      makeProgressList(document.getElementById('chartFaltaJustificada'),faltaJustPairs,{color:'#3b82f6'});
+      makeProgressList(document.getElementById('chartNoVotan'),noVotanPairs,{color:'#6b7280'});
+      makeProgressList(document.getElementById('chartMVP'),mvpPairs,{color:'#eab308'});
 
       pintarPartidosRecientes();
       pintarDetalleMultas();
