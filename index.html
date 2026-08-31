@@ -325,16 +325,16 @@
 
     <!-- ========== PARTIDO (afiche) ========== -->
     <section id="viewPartido" class="notebook rounded-2xl mt-4 hidden">
+      <!-- Acciones del admin (fuera del afiche, para no tapar el texto) -->
+      <div data-solo-admin class="flex flex-wrap items-center gap-2 mb-3">
+        <button id="btnDescargarJPG" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold whitespace-nowrap">Descargar afiche (JPG)</button>
+        <button id="btnFinalizado" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold whitespace-nowrap">Finalizar Partido</button>
+        <button id="btnReabrirPartido" class="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-800 text-xs font-semibold whitespace-nowrap">Reabrir partido</button>
+      </div>
       <div id="posterWrapper" class="poster-bg rounded-2xl p-6 md:p-10 poster-card relative">
         <!-- Logo -->
         <div class="absolute right-4 top-4">
           <img id="clubLogoPoster" class="h-12 w-12 sm:h-16 sm:w-16 md:h-28 md:w-28 lg:h-32 lg:w-32 object-contain rounded-md ring-1 ring-white/30 bg-white/90" alt="Logo">
-        </div>
-        <!-- Acciones del admin -->
-        <div data-solo-admin class="absolute left-4 top-4 flex flex-col items-start gap-2">
-          <button id="btnDescargarJPG" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold whitespace-nowrap">Descargar afiche (JPG)</button>
-          <button id="btnFinalizado" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold whitespace-nowrap">Finalizar Partido</button>
-          <button id="btnReabrirPartido" class="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-800 text-xs font-semibold whitespace-nowrap">Reabrir partido</button>
         </div>
         <div class="text-center text-white">
           <div id="partidoComplejo" class="text-sm md:text-base tracking-widest opacity-80">COMPLEJO DEPORTIVO</div>
@@ -424,54 +424,108 @@
 
     <!-- ========== DASHBOARD ========== -->
     <section id="viewDash" class="notebook p-4 md:p-6 rounded-2xl mt-4 hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(139,92,246,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Partidos jugados</div>
+          <div id="kpiPartidos" class="text-3xl font-black mt-1">0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Histórico total</div>
+        </div>
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(34,255,136,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Asistencia promedio</div>
+          <div id="kpiAsistencia" class="text-3xl font-black mt-1">0%</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Por partido</div>
+        </div>
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(59,130,246,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Goles promedio</div>
+          <div id="kpiGoles" class="text-3xl font-black mt-1">0.0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Por partido</div>
+        </div>
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas cobradas</div>
+          <div id="kpiMultas" class="text-3xl font-black mt-1">$0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Histórico total</div>
+        </div>
+      </div>
+
+      <!-- Tendencia + Donut -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="card bg-white p-4 shadow lg:col-span-2">
+          <h3 class="text-lg font-bold mb-1">Asistencia por partido</h3>
+          <p class="text-xs mb-3" style="color:var(--text-muted)">Porcentaje de jugadores que asisten, partido a partido.</p>
+          <div id="chartAsistenciaTendencia"></div>
+        </div>
+        <div class="card bg-white p-4 shadow flex flex-col">
+          <h3 class="text-lg font-bold mb-3">Equipos más ganadores</h3>
+          <div id="chartColoresDonut" class="flex-1 flex items-center justify-center"></div>
+        </div>
+      </div>
+
+      <!-- Top asistencia + Goles por color -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-2">EQUIPOS MAS GANADORES</h3>
-          <div id="chartColores"></div>
+          <h3 class="text-lg font-bold mb-3">Top asistencia</h3>
+          <div id="chartAsistenciaMax"></div>
         </div>
         <div class="card bg-white p-4 shadow">
           <h3 class="text-lg font-bold mb-2">Goles por color</h3>
           <div id="chartGolesColor"></div>
         </div>
+      </div>
+
+      <!-- Partidos jugados por equipo -->
+      <div class="grid grid-cols-1 gap-6 mb-6">
         <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-2">Asistencia — más presentes</h3>
-          <div id="chartAsistenciaMax"></div>
+          <h3 class="text-lg font-bold mb-1">Partidos jugados por equipo</h3>
+          <p class="text-xs mb-3" style="color:var(--text-muted)">Cuántas veces se ha elegido cada color para jugar (gane, pierda o empate).</p>
+          <div id="chartPartidosPorColor"></div>
+        </div>
+      </div>
+
+      <!-- Partidos recientes -->
+      <div class="grid grid-cols-1 gap-6 mb-6">
+        <div class="card bg-white p-4 shadow">
+          <h3 class="text-lg font-bold mb-3">Partidos recientes</h3>
+          <div id="listaPartidosRecientes" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- MVP + Inasistencia -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="card bg-white p-4 shadow">
+          <h3 class="text-lg font-bold mb-3">MVP más repetido</h3>
+          <div id="chartMVP"></div>
         </div>
         <div class="card bg-white p-4 shadow">
           <h3 class="text-lg font-bold mb-2">Inasistencia</h3>
-          <p class="text-xs text-slate-500 mb-2">Jugadores que votaron “NO ASISTO”.</p>
+          <p class="text-xs mb-2" style="color:var(--text-muted)">Jugadores que votaron “NO ASISTO”.</p>
           <div id="chartInasistencia"></div>
         </div>
-        <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-2">MVP</h3>
-          <div id="chartMVP"></div>
+      </div>
+
+      <!-- Cobranza -->
+      <div class="card p-5 shadow mb-6" style="background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(255,255,255,.02)); border:1px solid rgba(245,158,11,.3);">
+        <div class="text-xs uppercase tracking-widest font-bold" style="color:#ffc24d">Cobranza</div>
+        <h3 class="text-2xl font-extrabold mt-1">TOTAL MULTAS PENDIENTES</h3>
+        <p class="text-sm mt-1" style="color:var(--text-secondary)">Solo considera partidos finalizados.</p>
+        <div id="totalMultasPendientes" class="text-4xl font-black mt-2" style="color:#ffc24d">$0</div>
+      </div>
+
+      <div class="card bg-white p-4 shadow">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-bold">Detalle de multas</h3>
+            <p class="text-xs" style="color:var(--text-muted)">Fecha, jugador, motivo, monto y estado.</p>
+          </div>
+          <span id="countMultasPendientes" class="text-xs font-bold rounded-full bg-amber-100 text-amber-800 px-3 py-1">0 pendientes</span>
         </div>
-        <div class="card bg-amber-50 border border-amber-200 p-5 shadow lg:col-span-2">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div class="text-xs uppercase tracking-widest text-amber-700 font-bold">Cobranza</div>
-              <h3 class="text-2xl font-extrabold text-slate-900">TOTAL MULTAS PENDIENTES</h3>
-              <p class="text-sm text-slate-600 mt-1">Solo considera partidos finalizados.</p>
-            </div>
-            <div id="totalMultasPendientes" class="text-4xl font-black text-amber-700">$0</div>
-          </div>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+          <div class="font-extrabold text-amber-800 mb-3">PENDIENTES</div>
+          <div id="listaMultasPendientes" class="space-y-2"></div>
         </div>
-        <div class="card bg-white p-4 shadow lg:col-span-2">
-          <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h3 class="text-lg font-bold">Detalle de multas</h3>
-              <p class="text-xs text-slate-500">Fecha, jugador, motivo, monto y estado.</p>
-            </div>
-            <span id="countMultasPendientes" class="text-xs font-bold rounded-full bg-amber-100 text-amber-800 px-3 py-1">0 pendientes</span>
-          </div>
-          <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
-            <div class="font-extrabold text-amber-800 mb-3">PENDIENTES</div>
-            <div id="listaMultasPendientes" class="space-y-2"></div>
-          </div>
-          <div class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 mt-4">
-            <div class="font-extrabold text-emerald-800 mb-3">PAGADAS</div>
-            <div id="listaMultasPagadas" class="space-y-2"></div>
-          </div>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 mt-4">
+          <div class="font-extrabold text-emerald-800 mb-3">PAGADAS</div>
+          <div id="listaMultasPagadas" class="space-y-2"></div>
         </div>
       </div>
     </section>
@@ -1572,20 +1626,160 @@
 
     /* ---------- Dashboard (SVG barras) ---------- */
     function makeBarChart(container, dataPairs, opts={}){
-      const max=Math.max(1,...dataPairs.map(p=>p[1])); const barH=26;
+      const max=Math.max(1,...dataPairs.map(p=>p[1])); const barH=28;
       const svgNS='http://www.w3.org/2000/svg';
       const W=720, H=barH*dataPairs.length+10;
       const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.classList.add('w-full');
+      const gradId='barGrad'+Math.random().toString(36).slice(2);
+      const defs=document.createElementNS(svgNS,'defs');
+      const grad=document.createElementNS(svgNS,'linearGradient'); grad.setAttribute('id',gradId); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','1'); grad.setAttribute('y2','0');
+      const c1=document.createElementNS(svgNS,'stop'); c1.setAttribute('offset','0%'); c1.setAttribute('stop-color', opts.fill||'#8b5cf6');
+      const c2=document.createElementNS(svgNS,'stop'); c2.setAttribute('offset','100%'); c2.setAttribute('stop-color', opts.fill2||opts.fill||'#3b82f6');
+      grad.append(c1,c2); defs.appendChild(grad); svg.appendChild(defs);
       dataPairs.forEach((p,i)=>{
         const y=i*barH+4;
-        const bg=document.createElementNS(svgNS,'rect'); bg.setAttribute('x',120); bg.setAttribute('y',y); bg.setAttribute('width',W-140); bg.setAttribute('height',barH-8); bg.setAttribute('fill','#eef2ff');
-        const w=Math.round((W-140)*(p[1]/max));
-        const bar=document.createElementNS(svgNS,'rect'); bar.setAttribute('x',120); bar.setAttribute('y',y); bar.setAttribute('width',w); bar.setAttribute('height',barH-8); bar.setAttribute('fill', opts.fill || '#6366f1');
-        const label=document.createElementNS(svgNS,'text'); label.setAttribute('x',8); label.setAttribute('y',y+barH-12); label.setAttribute('fill','#334155'); label.setAttribute('font-size','12'); label.textContent=p[0];
-        const val=document.createElementNS(svgNS,'text'); val.setAttribute('x',120+w+6); val.setAttribute('y',y+barH-12); val.setAttribute('fill','#0f172a'); val.setAttribute('font-size','12'); val.textContent=p[1];
+        const bg=document.createElementNS(svgNS,'rect'); bg.setAttribute('x',130); bg.setAttribute('y',y); bg.setAttribute('width',W-150); bg.setAttribute('height',barH-10); bg.setAttribute('rx',6); bg.setAttribute('fill','rgba(255,255,255,.05)');
+        const w=Math.max(4,Math.round((W-150)*(p[1]/max)));
+        const bar=document.createElementNS(svgNS,'rect'); bar.setAttribute('x',130); bar.setAttribute('y',y); bar.setAttribute('width',w); bar.setAttribute('height',barH-10); bar.setAttribute('rx',6); bar.setAttribute('fill',`url(#${gradId})`);
+        const label=document.createElementNS(svgNS,'text'); label.setAttribute('x',6); label.setAttribute('y',y+barH-16); label.setAttribute('fill','#a6b0aa'); label.setAttribute('font-size','12'); label.textContent=p[0];
+        const val=document.createElementNS(svgNS,'text'); val.setAttribute('x',130+w+8); val.setAttribute('y',y+barH-16); val.setAttribute('fill','#f1f5f2'); val.setAttribute('font-size','12'); val.setAttribute('font-weight','700'); val.textContent=p[1];
         svg.append(bg,bar,label,val);
       });
       container.innerHTML=''; container.appendChild(svg);
+    }
+
+    function makeProgressList(container, dataPairs, opts={}){
+      container.innerHTML='';
+      if(!dataPairs.length){ container.innerHTML='<div class="text-sm" style="color:var(--text-muted)">Sin datos aún.</div>'; return; }
+      const max=Math.max(1,...dataPairs.map(p=>p[1]));
+      const color=opts.color||'#8b5cf6';
+      dataPairs.forEach(([label,value])=>{
+        const pct=Math.round((value/max)*100);
+        const row=document.createElement('div'); row.className='mb-3';
+        row.innerHTML=`
+          <div class="flex items-center justify-between text-sm mb-1">
+            <span class="font-semibold">${label}</span>
+            <span style="color:var(--text-muted)">${value}</span>
+          </div>
+          <div class="rounded-full overflow-hidden" style="background:rgba(255,255,255,.06);height:8px;">
+            <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${color},${color}aa);border-radius:9999px;"></div>
+          </div>`;
+        container.appendChild(row);
+      });
+    }
+
+    function makeAreaChart(container, values, opts={}){
+      const W=720, H=200, pad=28;
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.classList.add('w-full');
+      const color=opts.color||'#8b5cf6';
+
+      if(!values.length){
+        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',W/2); t.setAttribute('y',H/2); t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#6f7a73'); t.setAttribute('font-size','14'); t.textContent='Sin datos aún';
+        svg.appendChild(t); container.innerHTML=''; container.appendChild(svg); return;
+      }
+
+      const gradId='areaGrad'+Math.random().toString(36).slice(2);
+      const defs=document.createElementNS(svgNS,'defs');
+      const grad=document.createElementNS(svgNS,'linearGradient'); grad.setAttribute('id',gradId); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y2','1');
+      const s1=document.createElementNS(svgNS,'stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color',color); s1.setAttribute('stop-opacity','0.5');
+      const s2=document.createElementNS(svgNS,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color',color); s2.setAttribute('stop-opacity','0');
+      grad.append(s1,s2); defs.appendChild(grad); svg.appendChild(defs);
+
+      const max=Math.max(100,...values.map(v=>v.value));
+      const n=values.length;
+      const xStep=n>1?(W-pad*2)/(n-1):0;
+      const pts=values.map((v,i)=>{
+        const x=pad+i*xStep;
+        const y=H-pad-(v.value/max)*(H-pad*2);
+        return [x,y];
+      });
+
+      let linePath=`M ${pts[0][0]} ${pts[0][1]}`;
+      pts.slice(1).forEach(p=>{ linePath+=` L ${p[0]} ${p[1]}`; });
+      const areaPath=linePath+` L ${pts[n-1][0]} ${H-pad} L ${pts[0][0]} ${H-pad} Z`;
+
+      const area=document.createElementNS(svgNS,'path'); area.setAttribute('d',areaPath); area.setAttribute('fill',`url(#${gradId})`);
+      const line=document.createElementNS(svgNS,'path'); line.setAttribute('d',linePath); line.setAttribute('fill','none'); line.setAttribute('stroke',color); line.setAttribute('stroke-width','3'); line.setAttribute('stroke-linecap','round'); line.setAttribute('stroke-linejoin','round');
+      svg.append(area,line);
+
+      pts.forEach((p,i)=>{
+        const dot=document.createElementNS(svgNS,'circle'); dot.setAttribute('cx',p[0]); dot.setAttribute('cy',p[1]);
+        dot.setAttribute('r', i===n-1?5:3);
+        dot.setAttribute('fill', i===n-1?color:'rgba(255,255,255,.35)');
+        svg.appendChild(dot);
+      });
+
+      if(n){
+        const last=values[n-1];
+        const t=document.createElementNS(svgNS,'text'); t.setAttribute('x',pts[n-1][0]); t.setAttribute('y',Math.max(14,pts[n-1][1]-12)); t.setAttribute('text-anchor','end'); t.setAttribute('fill','#f1f5f2'); t.setAttribute('font-size','13'); t.setAttribute('font-weight','700'); t.textContent=`${last.value}%`;
+        svg.appendChild(t);
+      }
+
+      container.innerHTML=''; container.appendChild(svg);
+    }
+
+    function makeDonutChart(container, dataPairs, opts={}){
+      container.innerHTML='';
+      const colors=opts.colors||['#8b5cf6','#3b82f6','#ec4899','#f59e0b','#22ff88'];
+      const total=dataPairs.reduce((s,p)=>s+p[1],0);
+      const W=180,H=180,cx=90,cy=90,r=64,strokeW=24;
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.setAttribute('width','170'); svg.setAttribute('height','170');
+
+      if(!total){
+        const bg=document.createElementNS(svgNS,'circle'); bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r); bg.setAttribute('fill','none'); bg.setAttribute('stroke','rgba(255,255,255,.08)'); bg.setAttribute('stroke-width',strokeW);
+        svg.appendChild(bg);
+      }else{
+        const circumference=2*Math.PI*r;
+        let offset=0;
+        dataPairs.forEach((p,i)=>{
+          const dash=(p[1]/total)*circumference;
+          const circle=document.createElementNS(svgNS,'circle');
+          circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r);
+          circle.setAttribute('fill','none'); circle.setAttribute('stroke',colors[i%colors.length]); circle.setAttribute('stroke-width',strokeW);
+          circle.setAttribute('stroke-dasharray',`${dash} ${circumference-dash}`);
+          circle.setAttribute('stroke-dashoffset',-offset);
+          circle.setAttribute('transform',`rotate(-90 ${cx} ${cy})`);
+          svg.appendChild(circle);
+          offset+=dash;
+        });
+      }
+      const t1=document.createElementNS(svgNS,'text'); t1.setAttribute('x',cx); t1.setAttribute('y',cy-2); t1.setAttribute('text-anchor','middle'); t1.setAttribute('font-size','20'); t1.setAttribute('font-weight','800'); t1.setAttribute('fill','#f1f5f2'); t1.textContent=dataPairs[0]?dataPairs[0][0]:'—';
+      const t2=document.createElementNS(svgNS,'text'); t2.setAttribute('x',cx); t2.setAttribute('y',cy+16); t2.setAttribute('text-anchor','middle'); t2.setAttribute('font-size','11'); t2.setAttribute('fill','#6f7a73'); t2.textContent=`${total} partido${total===1?'':'s'}`;
+      svg.append(t1,t2);
+
+      const wrapper=document.createElement('div'); wrapper.className='flex flex-col items-center gap-3';
+      wrapper.appendChild(svg);
+      const legend=document.createElement('div'); legend.className='flex flex-wrap gap-3 justify-center text-xs';
+      dataPairs.forEach((p,i)=>{
+        const item=document.createElement('div'); item.className='flex items-center gap-1.5';
+        item.innerHTML=`<span style="width:9px;height:9px;border-radius:50%;background:${colors[i%colors.length]};display:inline-block;"></span><span>${p[0]} (${p[1]})</span>`;
+        legend.appendChild(item);
+      });
+      wrapper.appendChild(legend);
+      container.appendChild(wrapper);
+    }
+
+    function pintarPartidosRecientes(){
+      const cont=document.getElementById('listaPartidosRecientes');
+      if(!cont)return;
+      const recientes=[...historial].slice(-5).reverse();
+      if(!recientes.length){ cont.innerHTML='<div class="text-sm" style="color:var(--text-muted)">Aún no hay partidos jugados.</div>'; return; }
+      cont.innerHTML=recientes.map(h=>{
+        const nombreA=(COLORS[h.equipoA?.color]?.name||'EQUIPO A').replace('EQUIPO ','');
+        const nombreB=(COLORS[h.equipoB?.color]?.name||'EQUIPO B').replace('EQUIPO ','');
+        return `<div class="flex items-center justify-between gap-3 rounded-xl p-3" style="background:rgba(255,255,255,.03);">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style="background:var(--accent-dim);">⚽</div>
+            <div class="min-w-0">
+              <div class="font-semibold text-sm truncate">${nombreA} ${h.resultado?.golesA??0} – ${h.resultado?.golesB??0} ${nombreB}</div>
+              <div class="text-xs" style="color:var(--text-muted)">${formatoFechaDashboard(h.fecha)}</div>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap" style="background:rgba(34,255,136,.15);color:#34e6a0;">Finalizado</span>
+        </div>`;
+      }).join('');
     }
 
     function formatoFechaDashboard(fecha){
@@ -1681,12 +1875,15 @@
 
     function renderDashboard(){
       // El Dashboard se actualiza con historial; historial se escribe solo al finalizar.
-      const wins={},golesPorColor={},asis={},inasistencia={},mvpCount={};
+      const wins={},golesPorColor={},asis={},inasistencia={},mvpCount={},partidosPorColor={};
 
       historial.forEach(h=>{
         const r=h.resultado||{};
         const ca=h.equipoA?.color||'';
         const cb=h.equipoB?.color||'';
+
+        if(ca)partidosPorColor[ca]=(partidosPorColor[ca]||0)+1;
+        if(cb)partidosPorColor[cb]=(partidosPorColor[cb]||0)+1;
 
         if(r.golesA>r.golesB)wins[ca]=(wins[ca]||0)+1;
         else if(r.golesB>r.golesA)wins[cb]=(wins[cb]||0)+1;
@@ -1707,18 +1904,38 @@
         if(h.mvp)mvpCount[nombreById(h.mvp)]=(mvpCount[nombreById(h.mvp)]||0)+1;
       });
 
-      const winPairs=Object.entries(wins).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c.toUpperCase(),v]);
+      const winPairs=Object.entries(wins).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
+      const partidosPorColorPairs=Object.entries(partidosPorColor).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[(COLORS[c]?.name||c).replace('EQUIPO ',''),v]);
       const golPairs=Object.entries(golesPorColor).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c.toUpperCase(),v]);
       const asisPairs=Object.entries(asis).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const inasPairs=Object.entries(inasistencia).sort((a,b)=>b[1]-a[1]).slice(0,12);
       const mvpPairs=Object.entries(mvpCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
 
-      makeBarChart(document.getElementById('chartColores'),winPairs.length?winPairs:[["(sin datos)",0]],{fill:'#ef4444'});
-      makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["(sin datos)",0]],{fill:'#8b5cf6'});
-      makeBarChart(document.getElementById('chartAsistenciaMax'),asisPairs.length?asisPairs:[["(sin datos)",0]],{fill:'#3b82f6'});
-      makeBarChart(document.getElementById('chartInasistencia'),inasPairs.length?inasPairs:[["(sin datos)",0]],{fill:'#f59e0b'});
-      makeBarChart(document.getElementById('chartMVP'),mvpPairs.length?mvpPairs:[["(sin datos)",0]],{fill:'#eab308'});
+      // KPIs
+      const partidosJugados=historial.length;
+      const asistenciaSerie=historial.map(h=>{
+        const total=(h.equipoA?.jugadores?.length||0)+(h.equipoB?.jugadores?.length||0);
+        const noAsisten=Object.values(h.asistenciaJugadores||{}).filter(v=>v==='NO_ASISTE').length;
+        return {label:h.fecha, value: total?Math.round(((total-noAsisten)/total)*100):0};
+      });
+      const asistenciaPromedio=asistenciaSerie.length?Math.round(asistenciaSerie.reduce((s,x)=>s+x.value,0)/asistenciaSerie.length):0;
+      const golesPromedio=partidosJugados?(historial.reduce((s,h)=>s+Number(h.resultado?.golesA||0)+Number(h.resultado?.golesB||0),0)/partidosJugados).toFixed(1):'0.0';
+      const multasCobradas=construirMultas().filter(m=>m.pagada).reduce((s,m)=>s+m.monto,0);
 
+      const elP=document.getElementById('kpiPartidos'); if(elP)elP.textContent=partidosJugados;
+      const elAs=document.getElementById('kpiAsistencia'); if(elAs)elAs.textContent=`${asistenciaPromedio}%`;
+      const elGo=document.getElementById('kpiGoles'); if(elGo)elGo.textContent=golesPromedio;
+      const elMu=document.getElementById('kpiMultas'); if(elMu)elMu.textContent=`$${multasCobradas.toLocaleString('es-CL')}`;
+
+      makeAreaChart(document.getElementById('chartAsistenciaTendencia'), asistenciaSerie, {color:'#8b5cf6'});
+      makeDonutChart(document.getElementById('chartColoresDonut'), winPairs, {colors:['#8b5cf6','#3b82f6','#ec4899','#f59e0b']});
+      makeProgressList(document.getElementById('chartAsistenciaMax'), asisPairs, {color:'#3b82f6'});
+      makeBarChart(document.getElementById('chartGolesColor'),golPairs.length?golPairs:[["Sin datos",0]],{fill:'#ec4899',fill2:'#8b5cf6'});
+      makeBarChart(document.getElementById('chartPartidosPorColor'),partidosPorColorPairs.length?partidosPorColorPairs:[["Sin datos",0]],{fill:'#3b82f6',fill2:'#22ff88'});
+      makeBarChart(document.getElementById('chartInasistencia'),inasPairs.length?inasPairs:[["Sin datos",0]],{fill:'#f59e0b',fill2:'#ef4444'});
+      makeBarChart(document.getElementById('chartMVP'),mvpPairs.length?mvpPairs:[["Sin datos",0]],{fill:'#eab308',fill2:'#f59e0b'});
+
+      pintarPartidosRecientes();
       pintarDetalleMultas();
     }
 
