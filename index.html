@@ -429,12 +429,12 @@
         <div class="card p-4" style="background:linear-gradient(135deg, rgba(139,92,246,.14), rgba(255,255,255,.02));">
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Partidos jugados</div>
           <div id="kpiPartidos" class="text-3xl font-black mt-1">0</div>
-          <div class="text-xs mt-1" style="color:var(--text-secondary)">Histórico total</div>
+          <div id="kpiPartidosCaption" class="text-xs mt-1" style="color:var(--text-secondary)">Histórico total</div>
         </div>
         <div class="card p-4" style="background:linear-gradient(135deg, rgba(34,255,136,.14), rgba(255,255,255,.02));">
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Asistencia promedio</div>
           <div id="kpiAsistencia" class="text-3xl font-black mt-1">0%</div>
-          <div class="text-xs mt-1" style="color:var(--text-secondary)">Por partido</div>
+          <div id="kpiAsistenciaCaption" class="text-xs mt-1" style="color:var(--text-secondary)">Por partido</div>
         </div>
         <div class="card p-4" style="background:linear-gradient(135deg, rgba(59,130,246,.14), rgba(255,255,255,.02));">
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Goles promedio</div>
@@ -444,7 +444,21 @@
         <div class="card p-4" style="background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(255,255,255,.02));">
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas cobradas</div>
           <div id="kpiMultas" class="text-3xl font-black mt-1">$0</div>
-          <div class="text-xs mt-1" style="color:var(--text-secondary)">Histórico total</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Pendientes + pagadas</div>
+        </div>
+      </div>
+
+      <!-- Multas pendientes / pagadas -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas pendientes</div>
+          <div id="kpiMultasPendientes" class="text-3xl font-black mt-1" style="color:#ffc24d">$0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Por cobrar</div>
+        </div>
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(34,255,136,.14), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas pagadas</div>
+          <div id="kpiMultasPagadas" class="text-3xl font-black mt-1" style="color:#34e6a0">$0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Ya cobradas</div>
         </div>
       </div>
 
@@ -461,23 +475,15 @@
         </div>
       </div>
 
-      <!-- Top asistencia + Goles por color -->
+      <!-- Goles por color + Partidos jugados por equipo -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-3">Top asistencia</h3>
-          <div id="chartAsistenciaMax"></div>
-        </div>
         <div class="card bg-white p-4 shadow">
           <h3 class="text-lg font-bold mb-2">Goles por color</h3>
           <div id="chartGolesColor"></div>
         </div>
-      </div>
-
-      <!-- Partidos jugados por equipo -->
-      <div class="grid grid-cols-1 gap-6 mb-6">
         <div class="card bg-white p-4 shadow">
           <h3 class="text-lg font-bold mb-1">Partidos jugados por equipo</h3>
-          <p class="text-xs mb-3" style="color:var(--text-muted)">Cuántas veces se ha elegido cada color para jugar (gane, pierda o empate).</p>
+          <p class="text-xs mb-3" style="color:var(--text-muted)">Cuántas veces se ha elegido cada color para jugar.</p>
           <div id="chartPartidosPorColor"></div>
         </div>
       </div>
@@ -490,16 +496,22 @@
         </div>
       </div>
 
-      <!-- MVP + Inasistencia -->
+      <!-- MVP + (Top asistencia sobre Inasistencia) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="card bg-white p-4 shadow">
           <h3 class="text-lg font-bold mb-3">MVP más repetido</h3>
           <div id="chartMVP"></div>
         </div>
-        <div class="card bg-white p-4 shadow">
-          <h3 class="text-lg font-bold mb-2">Inasistencia sin aviso</h3>
-          <p class="text-xs mb-2" style="color:var(--text-muted)">Confirmaron asistencia (votaron SÍ) pero no llegaron al partido.</p>
-          <div id="chartInasistencia"></div>
+        <div>
+          <div class="card bg-white p-4 shadow mb-6">
+            <h3 class="text-lg font-bold mb-3">Top asistencia</h3>
+            <div id="chartAsistenciaMax"></div>
+          </div>
+          <div class="card bg-white p-4 shadow">
+            <h3 class="text-lg font-bold mb-2">Inasistencia sin aviso</h3>
+            <p class="text-xs mb-2" style="color:var(--text-muted)">Confirmaron asistencia (votaron SÍ) pero no llegaron al partido.</p>
+            <div id="chartInasistencia"></div>
+          </div>
         </div>
       </div>
 
@@ -515,14 +527,6 @@
           <p class="text-xs mb-2" style="color:var(--text-muted)">No respondieron la encuesta (ni SÍ ni NO) antes del partido.</p>
           <div id="chartNoVotan"></div>
         </div>
-      </div>
-
-      <!-- Cobranza -->
-      <div class="card p-5 shadow mb-6" style="background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(255,255,255,.02)); border:1px solid rgba(245,158,11,.3);">
-        <div class="text-xs uppercase tracking-widest font-bold" style="color:#ffc24d">Cobranza</div>
-        <h3 class="text-lg font-bold mt-1">TOTAL MULTAS PENDIENTES</h3>
-        <p class="text-xs mt-1" style="color:var(--text-secondary)">Solo considera partidos finalizados.</p>
-        <div id="totalMultasPendientes" class="text-3xl font-black mt-2" style="color:#ffc24d">$0</div>
       </div>
 
       <div class="card bg-white p-4 shadow">
@@ -751,6 +755,7 @@
     let cronograma={fecha:'',inicio:'',fin:'',canchaId:''};
     let resultado={golesA:0,golesB:0};
     let historial=[];
+    let multasTabla=[];
     let partidoActivo={id:'',fecha:'',inicio:'',fin:'',canchaId:'',estado:'sin_crear'};
     let multasPartido={};
     let mvpPartido='';
@@ -777,6 +782,10 @@
         multas_pagadas:h.multasPagadas||{}, total_multas:h.totalMultas,
         inasistentes:h.inasistentes, no_votaron:h.noVotaron||[], falta_justificada:h.faltaJustificada||[], mvp:h.mvp||null
       };
+    }
+
+    function filaAMulta(r){
+      return {id:r.id, jugadorId:r.jugador_id, jugadorNombre:r.jugador_nombre, historialId:r.historial_id, fecha:r.fecha, motivo:r.motivo, monto:Number(r.monto||0), pagada:Boolean(r.pagada)};
     }
 
     /* ---------- Guardar cambios en Supabase (reemplaza al viejo localStorage) ---------- */
@@ -806,11 +815,12 @@
     let cargaSeq=0;
     async function cargarTodoDesdeSupabase(){
       const miSeq=++cargaSeq;
-      const [rSocios, rCanchas, rHistorial, rEstado] = await Promise.all([
+      const [rSocios, rCanchas, rHistorial, rEstado, rMultas] = await Promise.all([
         sb.from('socios').select('*'),
         sb.from('canchas').select('*'),
         sb.from('historial').select('*').order('created_at',{ascending:true}),
-        sb.from('estado_partido').select('*').eq('id',1).single()
+        sb.from('estado_partido').select('*').eq('id',1).single(),
+        sb.from('multas').select('*').order('created_at',{ascending:true})
       ]);
       // Si ya se lanzó una carga más nueva mientras esperábamos esta, descartamos
       // esta respuesta atrasada para no pisar datos más recientes con datos viejos.
@@ -819,6 +829,7 @@
       socios = rSocios.data || [];
       canchas = rCanchas.data || [];
       historial = (rHistorial.data || []).map(filaAHistorial);
+      multasTabla = (rMultas.data || []).map(filaAMulta);
 
       const e = rEstado.data;
       if(e){
@@ -864,6 +875,7 @@
         .on('postgres_changes',{event:'*',schema:'public',table:'canchas'},onCambioRealtime)
         .on('postgres_changes',{event:'*',schema:'public',table:'historial'},onCambioRealtime)
         .on('postgres_changes',{event:'*',schema:'public',table:'estado_partido'},onCambioRealtime)
+        .on('postgres_changes',{event:'*',schema:'public',table:'multas'},onCambioRealtime)
         .subscribe();
     }
 
@@ -984,13 +996,14 @@
       inp.value=''; telInp.value=''; writeLS(LS_KEYS.socios,socios); pintarSocios();
     };
     document.getElementById('btnClearAll').onclick=()=>{
-      if(!confirm('¿Borrar todos los socios, canchas y equipos?')) return;
-      socios=[]; confirmados=[]; equipos={A:[],B:[]}; canchas=[]; cronograma={fecha:'',inicio:'',fin:'',canchaId:''}; resultado={golesA:0,golesB:0}; historial=[];
+      if(!confirm('¿Borrar todos los socios, canchas, equipos, historial y multas?')) return;
+      socios=[]; confirmados=[]; equipos={A:[],B:[]}; canchas=[]; cronograma={fecha:'',inicio:'',fin:'',canchaId:''}; resultado={golesA:0,golesB:0}; historial=[]; multasTabla=[];
       equiposCreados=false; partidoActivo={id:'',fecha:'',inicio:'',fin:'',canchaId:'',estado:'sin_crear'}; multasPartido={}; mvpPartido=''; clubLogo='';
       writeLS(LS_KEYS.socios,socios); writeLS(LS_KEYS.confirmados,confirmados); writeLS(LS_KEYS.equipos,equipos);
       writeLS(LS_KEYS.canchas,canchas); writeLS(LS_KEYS.cronograma,cronograma); writeLS(LS_KEYS.resultado,resultado); writeLS(LS_KEYS.historial,historial);
       writeLS('equipos_creados',equiposCreados); writeLS(PARTIDO_ACTIVO_KEY,partidoActivo); writeLS(MULTAS_PARTIDO_KEY,multasPartido);
       writeLS(MVP_PARTIDO_KEY,mvpPartido); writeLS('club_logo',clubLogo);
+      sb.from('multas').delete().neq('id','00000000-0000-0000-0000-000000000000').then(({error})=>{ if(error) console.error('Error borrando multas:',error); });
       pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma(); cargarLogoUI(); pintarEquipos(); renderDashboard(); renderHistorial(); actualizarEstadoEquiposAdmin(); 
     };
     document.getElementById('btnDesactivarTodos').onclick=()=>{
@@ -1522,6 +1535,22 @@
       historial.push(snap);
       writeLS(LS_KEYS.historial,historial);
 
+      // Crear las multas de este partido en la tabla "multas".
+      const multasNuevas=jugadoresPartido
+        .filter(id=>asistenciaJugadores[id]==='ATRASADO'||asistenciaJugadores[id]==='NO_ASISTE')
+        .map(id=>({
+          jugador_id:id,
+          jugador_nombre:nombreById(id),
+          historial_id:snap.id,
+          fecha:cronograma.fecha,
+          motivo:asistenciaJugadores[id]==='ATRASADO'?'Atraso al partido':'No asistencia al partido',
+          monto:multas[id],
+          pagada:false
+        }));
+      if(multasNuevas.length){
+        sb.from('multas').insert(multasNuevas).then(({error})=>{ if(error) console.error('Error creando multas:',error); });
+      }
+
       const mvpTexto = mvpPartido?nombreById(mvpPartido):'sin seleccionar';
 
       // Reiniciar todo para poder armar un partido nuevo desde cero.
@@ -1590,6 +1619,9 @@
 
       const entry=historial.pop();
       writeLS(LS_KEYS.historial,historial);
+
+      // Quitar las multas que se habían creado para este partido (se vuelven a crear al finalizar de nuevo).
+      sb.from('multas').delete().eq('historial_id',entry.id).then(({error})=>{ if(error) console.error('Error quitando multas del partido reabierto:',error); });
 
       // Restaurar cronograma.
       cronograma={fecha:entry.fecha,inicio:entry.inicio,fin:entry.fin,canchaId:entry.canchaId};
@@ -1829,23 +1861,14 @@
     }
 
     function construirMultas(){
-      const out=[];
-      historial.forEach(h=>{
-        Object.entries(h.asistenciaJugadores||{}).forEach(([id,estado])=>{
-          if(estado!=='ATRASADO'&&estado!=='NO_ASISTE')return;
-          const monto=Number((h.multas||{})[id] ?? (estado==='ATRASADO'?1000:2000));
-          const key=`${h.id}_${id}`;
-          out.push({
-            id:key,
-            jugador:nombreById(id),
-            fecha:h.fecha||'',
-            motivo:estado==='ATRASADO'?'Atraso al partido':'No asistencia al partido',
-            monto,
-            pagada:Boolean((h.multasPagadas||{})[id])
-          });
-        });
-      });
-      return out.sort((a,b)=>{
+      return multasTabla.map(m=>({
+        id:m.id,
+        jugador:m.jugadorNombre,
+        fecha:m.fecha||'',
+        motivo:m.motivo,
+        monto:Number(m.monto||0),
+        pagada:Boolean(m.pagada)
+      })).sort((a,b)=>{
         if(a.pagada!==b.pagada)return a.pagada?1:-1;
         return (`${b.fecha}_${b.jugador}`).localeCompare(`${a.fecha}_${a.jugador}`,'es');
       });
@@ -1855,51 +1878,66 @@
       const multas=construirMultas();
       const pendientes=multas.filter(m=>!m.pagada);
       const pagadas=multas.filter(m=>m.pagada);
-      const total=pendientes.reduce((sum,m)=>sum+m.monto,0);
+      const totalPendientes=pendientes.reduce((sum,m)=>sum+m.monto,0);
+      const totalPagadas=pagadas.reduce((sum,m)=>sum+m.monto,0);
 
-      const totalEl=document.getElementById('totalMultasPendientes');
+      const elPend=document.getElementById('kpiMultasPendientes');
+      const elPag=document.getElementById('kpiMultasPagadas');
       const countEl=document.getElementById('countMultasPendientes');
       const lp=document.getElementById('listaMultasPendientes');
       const lpg=document.getElementById('listaMultasPagadas');
 
-      if(totalEl)totalEl.textContent=`$${total.toLocaleString('es-CL')}`;
+      if(elPend)elPend.textContent=`$${totalPendientes.toLocaleString('es-CL')}`;
+      if(elPag)elPag.textContent=`$${totalPagadas.toLocaleString('es-CL')}`;
       if(countEl)countEl.textContent=`${pendientes.length} pendiente${pendientes.length===1?'':'s'}`;
 
-      const fila=(m,pendiente)=>{
+      const agruparPorJugador=(lista)=>{
+        const grupos={};
+        lista.forEach(m=>{ (grupos[m.jugador]=grupos[m.jugador]||[]).push(m); });
+        return grupos;
+      };
+
+      const filaGrupo=(nombre,items,pendiente)=>{
+        const totalGrupo=items.reduce((s,m)=>s+m.monto,0);
         const d=document.createElement('div');
         d.className='rounded-xl bg-white border border-slate-200 p-3';
-        d.innerHTML=`<div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="font-extrabold text-slate-900">${m.jugador}</div>
-            <div class="text-xs text-slate-500 mt-1">${formatoFechaDashboard(m.fecha)} · ${m.motivo}</div>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="font-black ${pendiente?'text-amber-700':'text-emerald-700'}">$${m.monto.toLocaleString('es-CL')}</span>
+        const filasHtml=items.map(m=>`
+          <div class="flex items-center justify-between gap-3 mt-2 pt-2 border-t border-slate-200">
+            <div class="text-xs text-slate-500">
+              <span class="font-black ${pendiente?'text-amber-700':'text-emerald-700'}">$${m.monto.toLocaleString('es-CL')}</span>
+              · ${formatoFechaDashboard(m.fecha)} · ${m.motivo}
+            </div>
             <button type="button" data-multa-id="${m.id}" data-multa-action="${pendiente?'pagar':'pendiente'}" data-solo-admin
-              class="px-3 py-1.5 rounded-lg text-xs font-bold ${pendiente?'bg-amber-500 text-white':'bg-slate-200 text-slate-800'}">
-              ${pendiente?'Pagada':'Pendiente'}
+              class="px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${pendiente?'bg-amber-500 text-white':'bg-emerald-600 text-white'}">
+              ${pendiente?'Pendiente':'Pagada'}
             </button>
+          </div>`).join('');
+        d.innerHTML=`
+          <div class="flex items-center justify-between gap-3">
+            <div class="font-extrabold text-slate-900">${nombre}</div>
+            <span class="text-xs font-bold whitespace-nowrap" style="color:var(--text-muted)">${items.length} multa${items.length===1?'':'s'} · $${totalGrupo.toLocaleString('es-CL')}</span>
           </div>
-        </div>`;
+          ${filasHtml}`;
         return d;
       };
 
       lp.innerHTML='';
       lpg.innerHTML='';
-      if(pendientes.length)pendientes.forEach(m=>lp.appendChild(fila(m,true)));
+      const gruposPend=agruparPorJugador(pendientes);
+      const gruposPag=agruparPorJugador(pagadas);
+      const nombresPend=Object.keys(gruposPend);
+      const nombresPag=Object.keys(gruposPag);
+      if(nombresPend.length)nombresPend.forEach(n=>lp.appendChild(filaGrupo(n,gruposPend[n],true)));
       else lp.innerHTML='<div class="text-sm text-slate-400 py-2">No hay multas pendientes.</div>';
-      if(pagadas.length)pagadas.forEach(m=>lpg.appendChild(fila(m,false)));
+      if(nombresPag.length)nombresPag.forEach(n=>lpg.appendChild(filaGrupo(n,gruposPag[n],false)));
       else lpg.innerHTML='<div class="text-sm text-slate-400 py-2">No hay multas pagadas.</div>';
     }
 
-    function marcarMultaPagada(key,pagada){
-      const idx=key.indexOf('_');
-      const historialId=key.slice(0,idx), socioId=key.slice(idx+1);
-      const h=historial.find(x=>x.id===historialId);
-      if(!h)return;
-      h.multasPagadas=h.multasPagadas||{};
-      if(pagada) h.multasPagadas[socioId]=true; else delete h.multasPagadas[socioId];
-      writeLS(LS_KEYS.historial,historial);
+    function marcarMultaPagada(id,pagada){
+      const m=multasTabla.find(x=>x.id===id);
+      if(!m)return;
+      m.pagada=pagada;
+      sb.from('multas').update({pagada}).eq('id',id).then(({error})=>{ if(error) console.error('Error actualizando multa:',error); });
       pintarDetalleMultas();
     }
     document.getElementById('listaMultasPendientes').addEventListener('click',e=>{
@@ -1972,10 +2010,31 @@
       const asistenciaSerieChart=asistenciaSerie.slice(-10);
       const asistenciaPromedio=asistenciaSerie.length?Math.round(asistenciaSerie.reduce((s,x)=>s+x.value,0)/asistenciaSerie.length):0;
       const golesPromedio=partidosJugados?(historial.reduce((s,h)=>s+Number(h.resultado?.golesA||0)+Number(h.resultado?.golesB||0),0)/partidosJugados).toFixed(1):'0.0';
-      const multasCobradas=construirMultas().filter(m=>m.pagada).reduce((s,m)=>s+m.monto,0);
+      const multasCobradas=construirMultas().reduce((s,m)=>s+m.monto,0);
 
-      const elP=document.getElementById('kpiPartidos'); if(elP)elP.textContent=partidosJugados;
-      const elAs=document.getElementById('kpiAsistencia'); if(elAs)elAs.textContent=`${asistenciaPromedio}%`;
+      const elP=document.getElementById('kpiPartidos');
+      const elAs=document.getElementById('kpiAsistencia');
+      const elPCap=document.getElementById('kpiPartidosCaption');
+      const elAsCap=document.getElementById('kpiAsistenciaCaption');
+      const esVistaSocioLeyendo = document.body.classList.contains('modo-socio-app') && socioActual;
+
+      if(esVistaSocioLeyendo){
+        const partidosDelSocio=historial.filter(h=>{
+          const roster=[...(h.equipoA?.jugadores||[]),...(h.equipoB?.jugadores||[])];
+          return roster.includes(socioActual.id) && (h.asistenciaJugadores||{})[socioActual.id]!=='NO_ASISTE';
+        }).length;
+        const asistenciaSocio = partidosJugados?Math.round((partidosDelSocio/partidosJugados)*100):0;
+        if(elP)elP.textContent=partidosDelSocio;
+        if(elPCap)elPCap.textContent=`De ${partidosJugados} jugados en total`;
+        if(elAs)elAs.textContent=`${asistenciaSocio}%`;
+        if(elAsCap)elAsCap.textContent='Tu asistencia';
+      }else{
+        if(elP)elP.textContent=partidosJugados;
+        if(elPCap)elPCap.textContent='Histórico total';
+        if(elAs)elAs.textContent=`${asistenciaPromedio}%`;
+        if(elAsCap)elAsCap.textContent='Por partido';
+      }
+
       const elGo=document.getElementById('kpiGoles'); if(elGo)elGo.textContent=golesPromedio;
       const elMu=document.getElementById('kpiMultas'); if(elMu)elMu.textContent=`$${multasCobradas.toLocaleString('es-CL')}`;
 
