@@ -11,6 +11,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-deep:#050b08;
@@ -107,6 +109,7 @@
     .nav-tab .nav-tab-icon{ font-size:1.05rem; line-height:1; }
     .nav-tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
     .nav-tab:not(.active):hover{ color:var(--text-secondary); }
+    .font-condensed{ font-family:'Roboto Condensed','Arial Narrow',sans-serif; letter-spacing:-0.01em; }
 
     /* Afiche: evita cortes verticales en nombres de jugadores */
     #posterWrapper .poster-player-row{
@@ -555,7 +558,6 @@
     <!-- ========== HISTORIAL ==========\-->
     <section id="viewHist" class="notebook p-4 md:p-6 rounded-2xl mt-4 hidden">
       <div id="histList" class="space-y-4"></div>
-      <p class="text-xs text-slate-500 mt-4">Se llena cuando presionas “Finalizar Partido”.</p>
     </section>
   </main>
   </div>
@@ -2100,35 +2102,35 @@
 
           const filaJugadorHist=(id)=>{
             const estado=(h.asistenciaJugadores||{})[id]||'ASISTE';
-            const dot = estado==='NO_ASISTE'?'🔴':estado==='ATRASADO'?'🟡':'🟢';
             const esMvp = h.mvp===id;
+            const dot = esMvp?'⭐':(estado==='NO_ASISTE'?'🔴':estado==='ATRASADO'?'🟡':'🟢');
             return `<div class="flex items-center justify-between gap-1 text-xs py-0.5">
-              <span class="truncate">${dot} ${nombreById(id)}${esMvp?' ⭐':''}</span>
+              <span class="truncate font-condensed">${dot} ${nombreById(id)}</span>
             </div>`;
           };
 
-          const equipoCol=(pal,jugadores,goles)=>`
-            <div class="rounded-lg overflow-hidden" style="border:1px solid var(--card-border);">
-              <div class="px-2 py-1.5 text-xs font-extrabold flex items-center justify-between" style="background:${pal.hex};color:${pal.text};">
-                <span>${pal.name}</span><span>${goles}</span>
-              </div>
-              <div class="p-2" style="background:rgba(255,255,255,.02);">
-                ${jugadores.length?jugadores.map(filaJugadorHist).join(''):'<div class="text-xs" style="color:var(--text-muted)">Sin jugadores</div>'}
-              </div>
+          const equipoBody=(jugadores)=>`
+            <div class="rounded-b-lg p-2" style="border:1px solid var(--card-border); border-top:none; background:rgba(255,255,255,.02);">
+              ${jugadores.length?jugadores.map(filaJugadorHist).join(''):'<div class="text-xs" style="color:var(--text-muted)">Sin jugadores</div>'}
             </div>`;
 
           const c=document.createElement('div'); c.className='border rounded-xl p-3 mb-3'; c.dataset.index=i;
           c.innerHTML=`
             <div class="flex items-center justify-between mb-1">
-              <div class="font-semibold text-sm">Partido #${idx+1} • ${h.inicio}–${h.fin}</div>
+              <div class="font-semibold text-sm text-white">Partido #${idx+1} • ${h.inicio}–${h.fin}</div>
               <button class="px-2 py-1 text-xs rounded bg-rose-600 text-white" data-del="${i}" data-solo-admin>Eliminar</button>
             </div>
-            <div class="text-xs mb-2" style="color:var(--text-muted)">${canchaTxt||'—'} · MVP: ${mvpTxt}</div>
-            <div class="grid grid-cols-2 gap-2">
-              ${equipoCol(palA,h.equipoA?.jugadores||[],h.resultado?.golesA??0)}
-              ${equipoCol(palB,h.equipoB?.jugadores||[],h.resultado?.golesB??0)}
+            <div class="text-xs mb-2 text-white">${canchaTxt||'—'} · MVP: ${mvpTxt}</div>
+            <div class="flex items-stretch rounded-lg overflow-hidden" style="border:1px solid var(--card-border);">
+              <div class="flex-1 min-w-0 px-2 py-1.5 text-xs font-extrabold truncate flex items-center" style="background:${palA.hex};color:${palA.text};">${palA.name}</div>
+              <div class="px-3 py-1.5 text-sm font-black flex items-center justify-center whitespace-nowrap" style="background:#0b0f1a;color:#fff;">${h.resultado?.golesA??0}-${h.resultado?.golesB??0}</div>
+              <div class="flex-1 min-w-0 px-2 py-1.5 text-xs font-extrabold truncate flex items-center justify-end text-right" style="background:${palB.hex};color:${palB.text};">${palB.name}</div>
             </div>
-            <div class="text-xs mt-2" style="color:var(--text-muted)">Multas: ${multasTxt||'Sin multas'}${totalMultasHist?` · <strong>Total $${totalMultasHist.toLocaleString('es-CL')}</strong>`:''}</div>`;
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              ${equipoBody(h.equipoA?.jugadores||[])}
+              ${equipoBody(h.equipoB?.jugadores||[])}
+            </div>
+            <div class="text-xs mt-2 text-white">Multas: ${multasTxt||'Sin multas'}${totalMultasHist?` · <strong>Total $${totalMultasHist.toLocaleString('es-CL')}</strong>`:''}</div>`;
           wrapper.appendChild(c);
         });
         histList.appendChild(wrapper);
