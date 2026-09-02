@@ -2364,6 +2364,9 @@
       document.getElementById('pantallaCarga').classList.add('hidden');
       iniciarRealtime();
       iniciarSonidoBienvenida();
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.register('sw.js').catch(err=>console.error('Service worker no registrado:',err));
+      }
     })();
   </script>
 </body>
