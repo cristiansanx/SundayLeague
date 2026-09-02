@@ -2332,6 +2332,9 @@
       if(sessionStorage.getItem(ADMIN_AUTH_KEY)==='1'){ mostrarAdmin(); } else { mostrarSocio(); }
       document.getElementById('pantallaCarga').classList.add('hidden');
       iniciarRealtime();
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.register('sw.js').catch(err=>console.error('Service worker no registrado:',err));
+      }
     })();
   </script>
 </body>
