@@ -7,7 +7,9 @@
   <meta name="theme-color" content="#071009">
   <link id="linkFavicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23071009'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
   <link id="linkAppleIcon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23071009'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
-  <link id="linkManifest" rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Liga%20de%20F%C3%BAtbol%22%2C%22short_name%22%3A%22Liga%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23071009%22%2C%22theme_color%22%3A%22%23071009%22%7D">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sunday's League">
+  <link id="linkManifest" rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%20%22Sunday%27s%20League%22%2C%20%22short_name%22%3A%20%22Sunday%27s%20League%22%2C%20%22start_url%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%23071009%22%2C%20%22theme_color%22%3A%20%22%23071009%22%7D">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -867,7 +869,7 @@
       document.getElementById('linkFavicon').href = clubLogo;
       document.getElementById('linkAppleIcon').href = clubLogo;
       const manifest = {
-        name:'Liga de Fútbol', short_name:'Liga', start_url:'.', display:'standalone',
+        name:"Sunday's League", short_name:"Sunday's League", start_url:'.', display:'standalone',
         background_color:'#071009', theme_color:'#071009',
         icons:[
           {src:clubLogo, sizes:'192x192', type:mime},
@@ -2320,6 +2322,37 @@
       activarTab('Socios');
     }
 
+    /* ---------- Sonido de bienvenida ---------- */
+    function iniciarSonidoBienvenida(){
+      let reproducido=false;
+      try{
+        const ctx=new (window.AudioContext||window.webkitAudioContext)();
+        const disparar=()=>{
+          if(reproducido)return;
+          reproducido=true;
+          const now=ctx.currentTime;
+          const nota=(freq,start,dur,vol=0.22)=>{
+            const osc=ctx.createOscillator(), gain=ctx.createGain();
+            osc.type='sine'; osc.frequency.value=freq;
+            gain.gain.setValueAtTime(0,now+start);
+            gain.gain.linearRampToValueAtTime(vol,now+start+0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001,now+start+dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(now+start); osc.stop(now+start+dur+0.05);
+          };
+          nota(523.25,0,0.18);
+          nota(783.99,0.12,0.3);
+          ['click','touchstart','keydown'].forEach(ev=>document.removeEventListener(ev,disparar));
+        };
+        if(ctx.state==='running'){
+          disparar();
+        }else{
+          ctx.resume().then(disparar).catch(()=>{});
+          ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,disparar,{once:true}));
+        }
+      }catch(err){ console.error('Audio no disponible:',err); }
+    }
+
     (async function arrancar(){
       try{
         await cargarTodoDesdeSupabase();
@@ -2330,6 +2363,7 @@
       if(sessionStorage.getItem(ADMIN_AUTH_KEY)==='1'){ mostrarAdmin(); } else { mostrarSocio(); }
       document.getElementById('pantallaCarga').classList.add('hidden');
       iniciarRealtime();
+      iniciarSonidoBienvenida();
     })();
   </script>
 </body>
