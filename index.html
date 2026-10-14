@@ -221,7 +221,7 @@
                   <th class="text-left px-2 py-2">Nombre del socio</th>
                   <th class="text-left px-2 py-2">Número de teléfono</th>
                   <th class="text-center px-2 py-2 w-32">Asiste</th>
-                  <th class="text-center px-2 py-2 w-24">Acciones</th>
+                  <th class="text-center px-2 py-2">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbodySocios"></tbody>
@@ -466,7 +466,7 @@
       </div>
 
       <!-- Multas pendientes / pagadas -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="card p-4" style="background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(255,255,255,.02));">
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas pendientes</div>
           <div id="kpiMultasPendientes" class="text-3xl font-black mt-1" style="color:#ffc24d">$0</div>
@@ -476,6 +476,11 @@
           <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Multas pagadas</div>
           <div id="kpiMultasPagadas" class="text-3xl font-black mt-1" style="color:#34e6a0">$0</div>
           <div class="text-xs mt-1" style="color:var(--text-secondary)">Ya cobradas</div>
+        </div>
+        <div class="card p-4" style="background:linear-gradient(135deg, rgba(59,130,246,.16), rgba(255,255,255,.02));">
+          <div class="text-xs uppercase tracking-widest" style="color:var(--text-muted)">Gastos</div>
+          <div id="kpiGastosTarjeta" class="text-3xl font-black mt-1">$0</div>
+          <div class="text-xs mt-1" style="color:var(--text-secondary)">Total registrado</div>
         </div>
       </div>
 
@@ -521,7 +526,7 @@
         </div>
         <div>
           <div class="card bg-white p-4 shadow mb-6">
-            <h3 class="text-lg font-bold mb-3">Top asistencia</h3>
+            <h3 class="text-lg font-bold mb-3">Top Participación</h3>
             <div id="chartAsistenciaMax"></div>
           </div>
           <div class="card bg-white p-4 shadow">
@@ -562,6 +567,21 @@
           <div class="font-extrabold text-emerald-800 mb-3">PAGADAS</div>
           <div id="listaMultasPagadas" class="space-y-2"></div>
         </div>
+      </div>
+
+      <!-- Gastos del club -->
+      <div class="card bg-white p-4 shadow mt-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div><h3 class="text-lg font-bold">Detalle de gastos</h3><p class="text-xs" style="color:var(--text-muted)">Registra gastos del club con fecha, descripción y monto.</p></div>
+          <span id="kpiGastos" class="text-lg font-extrabold">$0</span>
+        </div>
+        <div data-solo-admin id="gastoFormulario" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <input id="gastoFecha" type="date" class="rounded-lg border p-2 text-sm" aria-label="Fecha del gasto">
+          <input id="gastoInfo" class="rounded-lg border p-2 text-sm md:col-span-1" placeholder="Información del gasto">
+          <input id="gastoMonto" type="number" min="1" step="1" class="rounded-lg border p-2 text-sm" placeholder="Monto en pesos">
+        </div>
+        <button data-solo-admin id="btnAgregarGasto" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold">Agregar gasto</button>
+        <div class="overflow-x-auto mt-4"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="text-left px-3 py-2">Fecha</th><th class="text-left px-3 py-2">Información del gasto</th><th class="text-right px-3 py-2">Monto</th><th data-solo-admin class="text-center px-3 py-2">Acción</th></tr></thead><tbody id="listaGastos"></tbody></table></div>
       </div>
     </section>
 
@@ -704,12 +724,24 @@
               </div>
             </div>
 
-            <div class="mt-5">
+            <div class="mt-4">
               <button id="socioBtnCambiarVoto" type="button"
                       class="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold py-3">
                 Cambiar mi voto
               </button>
               <p id="socioCambiarVotoEstado" class="text-xs text-center mt-2 text-slate-500"></p>
+            </div>
+
+            <div class="border-t border-slate-300 mt-5 pt-4">
+              <h3 class="text-lg font-extrabold mb-3 text-center">No han votado</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-slate-200 bg-slate-50/5 p-3">
+                  <div id="socioListaNoVotaronA" class="space-y-2 text-sm"></div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50/5 p-3">
+                  <div id="socioListaNoVotaronB" class="space-y-2 text-sm"></div>
+                </div>
+              </div>
             </div>
 
             <button id="socioBtnInicio" type="button"
@@ -777,6 +809,7 @@
     let mvpPartido='';
     let equiposCreados=false;
     let clubLogo='';
+    let gastosClub=[];
 
     /* ---------- Conversión historial: fila de Supabase (snake_case) <-> objeto JS (camelCase) ---------- */
     function filaAHistorial(r){
@@ -811,38 +844,48 @@
     }
     async function writeLS(key,value){
       try{
-        if(key===LS_KEYS.socios){ await resincronizarTabla('socios', value); }
+        if(key===LS_KEYS.socios){
+          const filas=value.map(s=>({id:s.id,nombre:s.nombre,telefono:s.telefono||null,asiste:Boolean(s.asiste),voto:s.voto||null,bloqueado:Boolean(s.bloqueado),eliminado:Boolean(s.eliminado),...(s.created_at?{created_at:s.created_at}:{})}));
+          if(filas.length){ const {error}=await sb.from('socios').upsert(filas,{onConflict:'id'}); if(error) throw error; }
+        }
         else if(key===LS_KEYS.canchas){ await resincronizarTabla('canchas', value); }
         else if(key===LS_KEYS.historial){ await resincronizarTabla('historial', value.map(historialAFila)); }
-        else if(key===LS_KEYS.cronograma){ await sb.from('estado_partido').update({cronograma:value}).eq('id',1); }
-        else if(key===LS_KEYS.equipos){ await sb.from('estado_partido').update({equipos:value}).eq('id',1); }
-        else if(key===LS_KEYS.equipos_meta){ await sb.from('estado_partido').update({equipos_meta:value}).eq('id',1); }
-        else if(key===LS_KEYS.confirmados){ await sb.from('estado_partido').update({confirmados:value}).eq('id',1); }
-        else if(key===LS_KEYS.resultado){ await sb.from('estado_partido').update({resultado:value}).eq('id',1); }
-        else if(key===MVP_PARTIDO_KEY){ await sb.from('estado_partido').update({mvp_partido:value||null}).eq('id',1); }
-        else if(key===MULTAS_PARTIDO_KEY){ await sb.from('estado_partido').update({multas_partido:value}).eq('id',1); }
-        else if(key===PARTIDO_ACTIVO_KEY){ await sb.from('estado_partido').update({partido_activo:value}).eq('id',1); }
-        else if(key==='equipos_creados'){ await sb.from('estado_partido').update({equipos_creados:value}).eq('id',1); }
-        else if(key==='club_logo'){ await sb.from('estado_partido').update({club_logo:value}).eq('id',1); }
-      }catch(err){ console.error('Error guardando en Supabase:',key,err); }
+        else if(key===LS_KEYS.cronograma){ const {error}=await sb.from('estado_partido').update({cronograma:value}).eq('id',1); if(error) throw error; }
+        else if(key===LS_KEYS.equipos){ const {error}=await sb.from('estado_partido').update({equipos:value}).eq('id',1); if(error) throw error; }
+        else if(key===LS_KEYS.equipos_meta){ const {error}=await sb.from('estado_partido').update({equipos_meta:value}).eq('id',1); if(error) throw error; }
+        else if(key===LS_KEYS.confirmados){ const {error}=await sb.from('estado_partido').update({confirmados:value}).eq('id',1); if(error) throw error; }
+        else if(key===LS_KEYS.resultado){ const {error}=await sb.from('estado_partido').update({resultado:value}).eq('id',1); if(error) throw error; }
+        else if(key===MVP_PARTIDO_KEY){ const {error}=await sb.from('estado_partido').update({mvp_partido:value||null}).eq('id',1); if(error) throw error; }
+        else if(key===MULTAS_PARTIDO_KEY){ const {error}=await sb.from('estado_partido').update({multas_partido:value}).eq('id',1); if(error) throw error; }
+        else if(key===PARTIDO_ACTIVO_KEY){ const {error}=await sb.from('estado_partido').update({partido_activo:value}).eq('id',1); if(error) throw error; }
+        else if(key==='equipos_creados'){ const {error}=await sb.from('estado_partido').update({equipos_creados:value}).eq('id',1); if(error) throw error; }
+        else if(key==='club_logo'){ const {error}=await sb.from('estado_partido').update({club_logo:value}).eq('id',1); if(error) throw error; }
+      }catch(err){
+        console.error('Error guardando en Supabase:',key,err);
+        if(key===LS_KEYS.socios) alert('No se pudo guardar el cambio en Socios en Supabase. Verifica que hayas ingresado como administrador autorizado y revisa las políticas RLS.');
+      }
     }
 
     /* ---------- Cargar todo desde Supabase al abrir la app ---------- */
     let cargaSeq=0;
     async function cargarTodoDesdeSupabase(){
       const miSeq=++cargaSeq;
-      const [rSocios, rCanchas, rHistorial, rEstado, rMultas] = await Promise.all([
+      const [rSocios, rCanchas, rHistorial, rEstado, rMultas, rGastos] = await Promise.all([
         sb.from('socios').select('*'),
         sb.from('canchas').select('*'),
         sb.from('historial').select('*').order('created_at',{ascending:true}),
         sb.from('estado_partido').select('*').eq('id',1).single(),
-        sb.from('multas').select('*').order('created_at',{ascending:true})
+        sb.from('multas').select('*').order('created_at',{ascending:true}),
+        sb.from('gastos').select('*').order('fecha',{ascending:false})
       ]);
       // Si ya se lanzó una carga más nueva mientras esperábamos esta, descartamos
       // esta respuesta atrasada para no pisar datos más recientes con datos viejos.
       if(miSeq!==cargaSeq) return;
 
-      socios = rSocios.data || [];
+      socios = (rSocios.data || []).map(s=>({...s,bloqueado:Boolean(s.bloqueado),eliminado:Boolean(s.eliminado)}));
+      if(rSocios.error) console.error('Error cargando socios desde Supabase:',rSocios.error);
+      gastosClub = (rGastos.data || []).map(g=>({id:g.id,fecha:g.fecha,info:g.info,monto:Number(g.monto||0),created_at:g.created_at,created_by:g.created_by}));
+      if(rGastos.error) console.error('Error cargando gastos desde Supabase:',rGastos.error);
       canchas = rCanchas.data || [];
       historial = (rHistorial.data || []).map(filaAHistorial);
       multasTabla = (rMultas.data || []).map(filaAMulta);
@@ -884,7 +927,7 @@
       // Admin (repintar aunque esté oculto no tiene costo ni efectos secundarios)
       pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma();
       cargarLogoUI(); pintarEquipos(); actualizarEstadoEquiposAdmin(); pintarPartido();
-      renderDashboard(); renderHistorial();
+      renderDashboard(); renderHistorial(); pintarGastos();
       // Socio
       socioMostrarInfoPartido();
       const vistaAsistencia=document.getElementById('socioAttendanceView');
@@ -909,6 +952,7 @@
         .on('postgres_changes',{event:'*',schema:'public',table:'historial'},onCambioRealtime)
         .on('postgres_changes',{event:'*',schema:'public',table:'estado_partido'},onCambioRealtime)
         .on('postgres_changes',{event:'*',schema:'public',table:'multas'},onCambioRealtime)
+        .on('postgres_changes',{event:'*',schema:'public',table:'gastos'},onCambioRealtime)
         .subscribe();
     }
 
@@ -971,11 +1015,11 @@
     function renderFilaSocio(s,i){
       const tr=document.createElement('tr'); tr.className=i%2?'bg-white':'bg-slate-50'; tr.dataset.id=s.id;
       tr.innerHTML=`
-        <td class="px-4 py-2">${i+1}</td>
-        <td class="px-2 py-2 font-medium">${s.nombre}</td>
-        <td class="px-2 py-2 font-mono text-sm">${obtenerTelefonoSocio(s)||'—'}</td>
-        <td class="px-2 py-2 text-center"><input type="checkbox" ${s.asiste?'checked':''} data-id="${s.id}"></td>
-        <td class="px-2 py-2 text-center"><button data-action="delete" data-id="${s.id}" class="px-2 py-1 rounded bg-rose-600 text-white text-xs">Eliminar</button></td>`;
+        <td class="px-3 py-1.5">${i+1}</td>
+        <td class="px-2 py-1.5 font-medium">${s.nombre}${s.bloqueado?'<span class="ml-2 text-xs text-rose-400">DESHABILITADO</span>':''}</td>
+        <td class="px-2 py-1.5 font-mono text-sm">${obtenerTelefonoSocio(s)||'—'}</td>
+        <td class="px-2 py-1.5 text-center"><input type="checkbox" ${s.asiste?'checked':''} data-id="${s.id}"></td>
+        <td class="px-2 py-1.5"><div class="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap"><button data-action="edit" data-id="${s.id}" class="px-2 py-1 rounded bg-indigo-600 text-white text-xs leading-tight">Editar nombre</button><button data-action="toggle-block" data-id="${s.id}" class="px-2 py-1 rounded ${s.bloqueado?'bg-emerald-600':'bg-amber-600'} text-white text-xs leading-tight">${s.bloqueado?'Desbloquear':'Bloquear'}</button><button data-action="delete" data-id="${s.id}" class="px-2 py-1 rounded bg-rose-600 text-white text-xs leading-tight">Eliminar</button></div></td>`;
       return tr;
     }
     function pintarSocios(){
@@ -985,17 +1029,49 @@
       countSocios.textContent=`(${socios.length})`;
       const as=socios.filter(s=>s.asiste).length; countAsisten.textContent=as; countNoAsisten.textContent=socios.length-as;
     }
-    function registrarVotoSocio(id,voto){
-      const s=socios.find(x=>x.id===id); if(!s) return;
-      s.voto=voto; s.asiste=(voto==='SI');
-      writeLS(LS_KEYS.socios,socios);
-      if(voto==='SI'){
-        if(!equipos.A.includes(id)&&!equipos.B.includes(id)&&!confirmados.includes(id)){
-          confirmados.push(id); writeLS(LS_KEYS.confirmados,confirmados);
+    async function registrarVotoSocio(id,voto){
+      const s=socios.find(x=>x.id===id);
+      if(!s || s.bloqueado || s.eliminado){
+        alert('Socio Deshabilitado');
+        return false;
+      }
+      try{
+        const {data:{session}}=await sb.auth.getSession();
+        const esAdminSupabase=session?.user?.app_metadata?.role==='admin';
+        if(!esAdminSupabase){
+          const telefono=normalizarTelefonoAdmin(s.telefono);
+          if(!telefono){
+            alert('El teléfono registrado no es válido. Debe contener un celular chileno de 9 dígitos.');
+            return false;
+          }
+          const {data,error}=await sb.rpc('registrar_voto_socio',{p_telefono:telefono,p_voto:voto});
+          if(error){
+            console.error('Error registrando voto en Supabase:',error);
+            const detalle=error.message || error.details || error.hint || 'Error desconocido';
+            alert('No se pudo registrar el voto en Supabase. Detalle: '+detalle);
+            return false;
+          }
+          if(data!==true){
+            alert('Supabase no confirmó el registro del voto. Inténtalo nuevamente.');
+            return false;
+          }
         }
-      }else{
-        confirmados=confirmados.filter(x=>x!==id); equipos.A=equipos.A.filter(x=>x!==id); equipos.B=equipos.B.filter(x=>x!==id);
-        writeLS(LS_KEYS.confirmados,confirmados); writeLS(LS_KEYS.equipos,equipos);
+        s.voto=voto; s.asiste=(voto==='SI');
+        if(esAdminSupabase) await writeLS(LS_KEYS.socios,socios);
+        if(voto==='SI'){
+          if(!equipos.A.includes(id)&&!equipos.B.includes(id)&&!confirmados.includes(id)){
+            confirmados.push(id); await writeLS(LS_KEYS.confirmados,confirmados);
+          }
+        }else{
+          confirmados=confirmados.filter(x=>x!==id); equipos.A=equipos.A.filter(x=>x!==id); equipos.B=equipos.B.filter(x=>x!==id);
+          await writeLS(LS_KEYS.confirmados,confirmados); await writeLS(LS_KEYS.equipos,equipos);
+        }
+        pintarSocios();
+        return true;
+      }catch(err){
+        console.error('Error inesperado al registrar voto:',err);
+        alert('No se pudo registrar el voto. Revisa tu conexión e inténtalo nuevamente.');
+        return false;
       }
     }
 
@@ -1004,16 +1080,31 @@
       registrarVotoSocio(t.dataset.id, t.checked?'SI':'NO');
       pintarSocios();
     });
-    tbodySocios.addEventListener('click',ev=>{
-      const btn=ev.target.closest('button[data-action=delete]'); if(!btn) return;
-      const id=btn.dataset.id; socios=socios.filter(x=>x.id!==id); confirmados=confirmados.filter(x=>x!==id); equipos.A=equipos.A.filter(x=>x!==id); equipos.B=equipos.B.filter(x=>x!==id);
-      writeLS(LS_KEYS.socios,socios); writeLS(LS_KEYS.confirmados,confirmados); writeLS(LS_KEYS.equipos,equipos); pintarSocios();
+    tbodySocios.addEventListener('click',async ev=>{
+      const btn=ev.target.closest('button[data-action]'); if(!btn) return;
+      const id=btn.dataset.id, socio=socios.find(x=>x.id===id); if(!socio)return;
+      if(btn.dataset.action==='edit'){
+        const nuevo=prompt('Editar nombre del socio:',socio.nombre); if(nuevo===null)return;
+        const nombre=nuevo.trim(); if(!nombre){alert('El nombre no puede quedar vacío.');return;}
+        if(socios.some(x=>x.id!==id&&x.nombre.trim().toLowerCase()===nombre.toLowerCase())){alert('Ya existe un socio con ese nombre.');return;}
+        socio.nombre=nombre;
+      }else if(btn.dataset.action==='toggle-block'){
+        socio.bloqueado=!socio.bloqueado;localStorage.setItem('socios_bloqueados',JSON.stringify(socios.filter(x=>x.bloqueado).map(x=>x.id)));
+        if(socio.bloqueado){socio.asiste=false;socio.voto=undefined;confirmados=confirmados.filter(x=>x!==id);equipos.A=equipos.A.filter(x=>x!==id);equipos.B=equipos.B.filter(x=>x!==id);writeLS(LS_KEYS.confirmados,confirmados);writeLS(LS_KEYS.equipos,equipos);}
+      }else if(btn.dataset.action==='delete'){
+        if(!confirm(`¿Eliminar a ${socio.nombre}?`))return;
+        const {error:deleteSocioError}=await sb.from('socios').delete().eq('id',id);
+        if(deleteSocioError){console.error('Error eliminando socio:',deleteSocioError);alert('No se pudo eliminar el socio en Supabase. Verifica los permisos de administrador.');return;}
+        socios=socios.filter(x=>x.id!==id); confirmados=confirmados.filter(x=>x!==id); equipos.A=equipos.A.filter(x=>x!==id); equipos.B=equipos.B.filter(x=>x!==id);
+        writeLS(LS_KEYS.confirmados,confirmados);writeLS(LS_KEYS.equipos,equipos);
+      }
+      writeLS(LS_KEYS.socios,socios); pintarSocios(); renderDashboard();
     });
     document.getElementById('btnBulkAdd').onclick=()=>{
       const raw=document.getElementById('bulkTextarea').value, lines=raw.split('\n').map(x=>x.trim()).filter(Boolean);
       if(!lines.length) return;
       const ex=new Set(socios.map(s=>s.nombre.toLowerCase()));
-      lines.forEach(n=>{ if(!ex.has(n.toLowerCase())) socios.push({id:crypto.randomUUID(),nombre:n,telefono:'',asiste:false}); });
+      lines.forEach(n=>{ if(!ex.has(n.toLowerCase())) socios.push({id:crypto.randomUUID(),nombre:n,telefono:'',asiste:false,voto:null,bloqueado:false,eliminado:false}); });
       document.getElementById('bulkTextarea').value=''; writeLS(LS_KEYS.socios,socios); pintarSocios();
     };
     document.getElementById('btnAddOne').onclick=()=>{
@@ -1025,19 +1116,21 @@
       if(!telefono){alert('Ingresa un número celular válido de 9 dígitos.');return;}
       if(socios.some(s=>s.nombre.toLowerCase()===n.toLowerCase())){alert('Ese nombre ya existe.');return;}
       if(socios.some(s=>obtenerTelefonoSocio(s)===telefono)){alert('Ese número de teléfono ya está registrado.');return;}
-      socios.push({id:crypto.randomUUID(),nombre:n,telefono,asiste:false});
+      socios.push({id:crypto.randomUUID(),nombre:n,telefono,asiste:false,voto:null,bloqueado:false,eliminado:false});
       inp.value=''; telInp.value=''; writeLS(LS_KEYS.socios,socios); pintarSocios();
     };
-    document.getElementById('btnClearAll').onclick=()=>{
+    document.getElementById('btnClearAll').onclick=async ()=>{
       if(!confirm('¿Borrar todos los socios, canchas, equipos, historial y multas?')) return;
       socios=[]; confirmados=[]; equipos={A:[],B:[]}; canchas=[]; cronograma={fecha:'',inicio:'',fin:'',canchaId:''}; resultado={golesA:0,golesB:0}; historial=[]; multasTabla=[];
       equiposCreados=false; partidoActivo={id:'',fecha:'',inicio:'',fin:'',canchaId:'',estado:'sin_crear'}; multasPartido={}; mvpPartido=''; clubLogo='';
+      const {error:clearSociosError}=await sb.from('socios').delete().neq('id','00000000-0000-0000-0000-000000000000');
+      if(clearSociosError){console.error('Error borrando socios:',clearSociosError);alert('No se pudieron borrar los socios en Supabase.');return;}
       writeLS(LS_KEYS.socios,socios); writeLS(LS_KEYS.confirmados,confirmados); writeLS(LS_KEYS.equipos,equipos);
       writeLS(LS_KEYS.canchas,canchas); writeLS(LS_KEYS.cronograma,cronograma); writeLS(LS_KEYS.resultado,resultado); writeLS(LS_KEYS.historial,historial);
       writeLS('equipos_creados',equiposCreados); writeLS(PARTIDO_ACTIVO_KEY,partidoActivo); writeLS(MULTAS_PARTIDO_KEY,multasPartido);
       writeLS(MVP_PARTIDO_KEY,mvpPartido); writeLS('club_logo',clubLogo);
       sb.from('multas').delete().neq('id','00000000-0000-0000-0000-000000000000').then(({error})=>{ if(error) console.error('Error borrando multas:',error); });
-      pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma(); cargarLogoUI(); pintarEquipos(); renderDashboard(); renderHistorial(); actualizarEstadoEquiposAdmin(); 
+      pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma(); cargarLogoUI(); pintarEquipos(); renderDashboard(); renderHistorial(); pintarGastos(); actualizarEstadoEquiposAdmin(); 
     };
     document.getElementById('btnDesactivarTodos').onclick=()=>{
       socios=socios.map(s=>({...s,asiste:false,voto:undefined})); confirmados=[]; equipos={A:[],B:[]};
@@ -1391,8 +1484,9 @@
       headerA.className=`px-5 py-3 text-white font-extrabold tracking-wide bg-gradient-to-r ${palA.grad}`; headerA.textContent=palA.name;
       headerB.className=`px-5 py-3 text-white font-extrabold tracking-wide bg-gradient-to-r ${palB.grad}`; headerB.textContent=palB.name;
 
-      listaA.innerHTML=''; equipos.A.forEach((id,idx)=> listaA.appendChild(filaJugador(idx+1, nombreById(id), id)));
-      listaB.innerHTML=''; equipos.B.forEach((id,idx)=> listaB.appendChild(filaJugador(idx+1, nombreById(id), id)));
+      const equiposPartido=equiposCreados?equipos:{A:[],B:[]};
+      listaA.innerHTML=''; equiposPartido.A.forEach((id,idx)=> listaA.appendChild(filaJugador(idx+1, nombreById(id), id)));
+      listaB.innerHTML=''; equiposPartido.B.forEach((id,idx)=> listaB.appendChild(filaJugador(idx+1, nombreById(id), id)));
       actualizarResumenAsistenciaPartido();
 
       golesA.value = resultado.golesA ?? 0; golesB.value = resultado.golesB ?? 0; mostrarResultadoTexto(); 
@@ -1864,7 +1958,7 @@
     function pintarPartidosRecientes(){
       const cont=document.getElementById('listaPartidosRecientes');
       if(!cont)return;
-      const recientes=[...historial].slice(-5).reverse();
+      const recientes=[...historial].sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))).slice(0,5);
       if(!recientes.length){ cont.innerHTML='<div class="text-sm" style="color:var(--text-muted)">Aún no hay partidos jugados.</div>'; return; }
       cont.innerHTML=recientes.map(h=>{
         const nombreA=(COLORS[h.equipoA?.color]?.name||'EQUIPO A').replace('EQUIPO ','');
@@ -1984,6 +2078,36 @@
       marcarMultaPagada(b.dataset.multaId,false);
     });
 
+    function pintarGastos(){
+      const lista=document.getElementById('listaGastos'); if(!lista)return;
+      gastosClub.sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||'')));
+      const total=gastosClub.reduce((sum,g)=>sum+Number(g.monto||0),0);
+      const fmt=n=>'$'+Number(n||0).toLocaleString('es-CL');
+      const k=document.getElementById('kpiGastos');if(k)k.textContent=fmt(total);
+      const kt=document.getElementById('kpiGastosTarjeta');if(kt)kt.textContent=fmt(total);
+      const esAdmin=!document.body.classList.contains('modo-socio-app');
+      lista.innerHTML=gastosClub.length?gastosClub.map(g=>`<tr><td class="px-3 py-2">${formatoFechaDashboard(g.fecha)}</td><td class="px-3 py-2">${String(g.info||'').replace(/</g,'&lt;')}</td><td class="px-3 py-2 text-right font-semibold">${fmt(g.monto)}</td>${esAdmin?`<td class="px-3 py-2 text-center"><button data-solo-admin data-gasto-delete="${g.id}" class="px-2 py-1 rounded bg-rose-600 text-white text-xs">Eliminar</button></td>`:''}</tr>`).join(''):`<tr><td colspan="${esAdmin?4:3}" class="px-3 py-4 text-center text-slate-400">No hay gastos registrados.</td></tr>`;
+      const tabla=document.querySelector('#listaGastos').closest('table');
+      if(tabla){const th=tabla.querySelector('thead th:last-child');if(th)th.classList.toggle('hidden',!esAdmin);}
+    }
+    document.getElementById('btnAgregarGasto').addEventListener('click',async ()=>{
+      if(document.body.classList.contains('modo-socio-app')){alert('Solo el administrador puede registrar gastos.');return;}
+      const fecha=document.getElementById('gastoFecha').value,info=document.getElementById('gastoInfo').value.trim(),monto=Number(document.getElementById('gastoMonto').value);
+      if(!fecha||!info||!Number.isFinite(monto)||monto<=0){alert('Ingresa fecha, información y un monto mayor a cero.');return;}
+      const {data,error}=await sb.from('gastos').insert({fecha,info,monto}).select().single();
+      if(error){console.error('Error registrando gasto:',error);alert('No se pudo registrar el gasto en Supabase. Verifica que hayas iniciado sesión como administrador y que las políticas RLS estén configuradas.');return;}
+      gastosClub.unshift({id:data.id,fecha:data.fecha,info:data.info,monto:Number(data.monto),created_at:data.created_at,created_by:data.created_by});
+      document.getElementById('gastoInfo').value='';document.getElementById('gastoMonto').value='';pintarGastos();
+    });
+    document.getElementById('listaGastos').addEventListener('click',async e=>{
+      const b=e.target.closest('button[data-gasto-delete]');if(!b)return;
+      if(document.body.classList.contains('modo-socio-app')){alert('Solo el administrador puede eliminar gastos.');return;}
+      if(!confirm('¿Eliminar este gasto?'))return;
+      const {error}=await sb.from('gastos').delete().eq('id',b.dataset.gastoDelete);
+      if(error){console.error('Error eliminando gasto:',error);alert('No se pudo eliminar el gasto en Supabase. Verifica los permisos de administrador.');return;}
+      gastosClub=gastosClub.filter(g=>g.id!==b.dataset.gastoDelete);pintarGastos();
+    });
+
     function renderDashboard(){
       // El Dashboard se actualiza con historial; historial se escribe solo al finalizar.
       const wins={},golesPorColor={},asis={},inasistencia={},mvpCount={},partidosPorColor={},noVotanCount={},faltaJustCount={};
@@ -2035,7 +2159,7 @@
 
       // KPIs
       const partidosJugados=historial.length;
-      const asistenciaSerie=historial.map(h=>{
+      const asistenciaSerie=[...historial].sort((a,b)=>String(a.fecha||'').localeCompare(String(b.fecha||''))).map(h=>{
         const total=(h.equipoA?.jugadores?.length||0)+(h.equipoB?.jugadores?.length||0);
         const noAsisten=Object.values(h.asistenciaJugadores||{}).filter(v=>v==='NO_ASISTE').length;
         return {label:h.fecha, fechaLabel:formatoFechaCorta(h.fecha), value: total?Math.round(((total-noAsisten)/total)*100):0};
@@ -2083,6 +2207,7 @@
 
       pintarPartidosRecientes();
       pintarDetalleMultas();
+      pintarGastos();
     }
 
     /* ---------- Historial (detalle + BORRAR) ---------- */
@@ -2191,13 +2316,20 @@
     }
 
     function socioRenderAsistencia(){
-      const votaron = socios.filter(s=>s.voto==='SI'||s.voto==='NO');
+      const activos = socios.filter(s=>!s.bloqueado&&!s.eliminado);
+      const votaron = activos.filter(s=>s.voto==='SI'||s.voto==='NO');
       const si = votaron.filter(s=>s.voto==='SI').sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
       const no = votaron.filter(s=>s.voto==='NO').sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
       document.getElementById('socioCountSi').textContent = si.length;
       document.getElementById('socioCountNo').textContent = no.length;
       document.getElementById('socioListaSi').innerHTML = si.length ? si.map(s=>`<div class="rounded-lg px-3 py-1.5 font-semibold" style="background:rgba(16,185,129,.14);border-left:3px solid #22ff88;">${s.nombre}</div>`).join('') : `<div class="text-slate-400">Nadie todavía.</div>`;
       document.getElementById('socioListaNo').innerHTML = no.length ? no.map(s=>`<div class="rounded-lg px-3 py-1.5 font-semibold" style="background:rgba(244,63,94,.14);border-left:3px solid #ff4d6a;">${s.nombre}</div>`).join('') : `<div class="text-slate-400">Nadie todavía.</div>`;
+      const pendientes=socios.filter(s=>!s.bloqueado&&!s.eliminado&&s.voto!=='SI'&&s.voto!=='NO').sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+      const mitad=Math.ceil(pendientes.length/2);
+      const pendientesA=pendientes.slice(0,mitad), pendientesB=pendientes.slice(mitad);
+      const pintarPendientes=arr=>arr.length?arr.map(s=>`<div class="rounded-lg px-3 py-1.5 font-semibold" style="background:rgba(148,163,184,.12);">${s.nombre}</div>`).join(''):'<div class="text-slate-400">Sin socios.</div>';
+      document.getElementById('socioListaNoVotaronA').innerHTML=pintarPendientes(pendientesA);
+      document.getElementById('socioListaNoVotaronB').innerHTML=pintarPendientes(pendientesB);
 
       const btn=document.getElementById('socioBtnCambiarVoto');
       const estado=document.getElementById('socioCambiarVotoEstado');
@@ -2220,6 +2352,7 @@
       if(!tel){ errEl.textContent='Ingresa un número celular válido de 9 dígitos.'; errEl.classList.remove('hidden'); return; }
       const s=socios.find(x=>obtenerTelefonoSocio(x)===tel);
       if(!s){ errEl.textContent='Este número no está registrado.'; errEl.classList.remove('hidden'); return; }
+      if(s.bloqueado||s.eliminado){ errEl.textContent='Socio Deshabilitado'; errEl.classList.remove('hidden'); return; }
 
       socioActual=s;
       document.getElementById('socioNombreJugador').textContent=s.nombre;
@@ -2234,12 +2367,18 @@
     });
 
     document.querySelectorAll('.socio-voto-btn').forEach(btn=>{
-      btn.addEventListener('click',()=>{
+      btn.addEventListener('click',async()=>{
         if(!socioActual) return;
         const voto=btn.dataset.voto;
-        registrarVotoSocio(socioActual.id,voto);
-        document.getElementById('socioRespuesta').innerHTML=`${socioActual.nombre}<br>Asistencia: <strong>${voto==='SI'?'SÍ ASISTIRÉ':'NO ASISTIRÉ'}</strong>`;
-        socioMostrarVista('socioSuccessView');
+        btn.disabled=true;
+        try{
+          const registrado=await registrarVotoSocio(socioActual.id,voto);
+          if(!registrado) return;
+          document.getElementById('socioRespuesta').innerHTML=`${socioActual.nombre}<br>Asistencia: <strong>${voto==='SI'?'SÍ ASISTIRÉ':'NO ASISTIRÉ'}</strong>`;
+          socioMostrarVista('socioSuccessView');
+        }finally{
+          btn.disabled=false;
+        }
       });
     });
 
@@ -2318,7 +2457,7 @@
 
     /* ---------- Init ---------- */
     function init(){
-      pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma(); cargarLogoUI(); pintarEquipos(); renderDashboard(); renderHistorial();
+      pintarSocios(); pintarCanchas(); cargarCanchasEnCronograma(); pintarCronograma(); cargarLogoUI(); pintarEquipos(); renderDashboard(); renderHistorial(); pintarGastos();
       activarTab('Socios');
     }
 
